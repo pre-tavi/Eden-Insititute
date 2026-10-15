@@ -1,0 +1,1 @@
+"""Root configuration package for Dr. Violet's LMS (EdenLMS)."""

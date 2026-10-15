@@ -1,0 +1,24 @@
+# ==============================================================================
+# Dr. Violet's LMS (EdenLMS) — Backend Python Dependencies
+# Install with: pip install -r backend/requirements.txt
+# ==============================================================================
+
+# --- Core Framework & API ---
+Django>=5.1,<5.3
+django[argon2]>=5.1,<5.3
+djangorestframework>=3.17.2,<3.18.0
+django-environ>=0.11.2,<0.13.0
+
+# --- Database Driver (PostgreSQL) ---
+psycopg[binary]>=3.2.0,<3.3.0
+
+# --- Security, Rate Limiting, CORS & Headers ---
+django-cors-headers>=4.4.0,<5.0.0
+django-axes>=7.0.0,<8.0.0
+django-csp>=3.8,<4.0
+
+# --- Testing, Linting & Vulnerability Auditing ---
+pytest>=9.0.3,<10.0.0
+pytest-django>=4.9.0,<5.0.0
+pip-audit>=2.7.0,<3.0.0
+ruff>=0.6.0,<1.0.0

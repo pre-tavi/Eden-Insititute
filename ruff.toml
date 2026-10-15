@@ -1,0 +1,23 @@
+# ==============================================================================
+# Ruff Configuration for Dr. Violet's LMS (EdenLMS) — Django 5.2 LTS + DRF
+# ==============================================================================
+target-version = "py313"
+line-length = 100
+extend-exclude = [
+    "**/migrations/*.py",
+    ".venv",
+    "frontend",
+]
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "RUF"]
+ignore = [
+    "E501",   # Line length managed by formatter
+    "RUF012", # Standard Django/DRF class attributes (Meta.ordering, permission_classes, REQUIRED_FIELDS)
+]
+
+[lint.per-file-ignores]
+"backend/config/settings/*.py" = ["F401", "F403", "F405", "RUF100"]
+
+[lint.isort]
+known-first-party = ["apps", "config"]
