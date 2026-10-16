@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Badge,
   Button,
@@ -9,6 +9,8 @@ import {
   PriceTag,
   Skeleton,
 } from "../components/ui";
+import { useAuth } from "../context/AuthContext";
+import { ensureCsrfToken, extractApiErrorMessage } from "../types/auth";
 import type { AudienceTier, CourseDetailItem } from "../types/catalog";
 
 export interface CourseDetailPageProps {
@@ -17,10 +19,16 @@ export interface CourseDetailPageProps {
 
 export function CourseDetailPage({ audience }: CourseDetailPageProps) {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [course, setCourse] = useState<CourseDetailItem | null>(null);
+  const [selectedCohortId, setSelectedCohortId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [notFound, setNotFound] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [isEnrolling, setIsEnrolling] = useState<boolean>(false);
 
   const fetchCourseDetail = useCallback(async () => {
     if (!slug) {
@@ -56,6 +64,9 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
 
       const data = (await response.json()) as CourseDetailItem;
       setCourse(data);
+      if (data.cohorts.length > 0) {
+        setSelectedCohortId(data.cohorts[0].id);
+      }
     } catch (err) {
       const msg =
         err instanceof Error
@@ -71,10 +82,54 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
     void fetchCourseDetail();
   }, [fetchCourseDetail]);
 
+  const handleEnrollClick = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/courses/${slug ?? ""}` } });
+      return;
+    }
+    if (!selectedCohortId) {
+      setEnrollError("Please select an open cohort before enrolling.");
+      return;
+    }
+
+    setEnrollError(null);
+    setIsEnrolling(true);
+
+    try {
+      const csrfToken = await ensureCsrfToken();
+      const response = await fetch("/api/enrollments/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ cohort_id: selectedCohortId }),
+      });
+
+      const payload: unknown = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          extractApiErrorMessage(payload, "Could not create cohort enrollment.")
+        );
+      }
+
+      navigate("/my-learning");
+    } catch (err) {
+      setEnrollError(
+        err instanceof Error ? err.message : "Could not complete enrollment."
+      );
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
+
   const detectedTimezone =
-    typeof Intl !== "undefined"
+    user?.profile?.timezone ||
+    (typeof Intl !== "undefined"
       ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Nairobi"
-      : "Africa/Nairobi";
+      : "Africa/Nairobi");
 
   if (isLoading) {
     return (
@@ -144,7 +199,6 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
         </Link>
       </div>
 
-      {/* Programme Header */}
       <header className="border-b border-[var(--color-border-hairline)] pb-6">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Badge level={course.level}>{course.level_display}</Badge>
@@ -158,9 +212,7 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
         </p>
       </header>
 
-      {/* Main Content + Tuition Panel Grid */}
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-        {/* Left Column: Syllabus + Live Lectures + Residency Block */}
         <div className="lg:col-span-8 space-y-6">
           <Card
             as="section"
@@ -197,7 +249,6 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
             </div>
           </Card>
 
-          {/* 5-Day Practical Residency Callout (Nairobi & Embu) */}
           <section
             aria-labelledby="residency-heading"
             className="rounded-[var(--radius-md)] border border-[var(--color-accent-terracotta-border)] bg-[var(--color-accent-terracotta-bg)] p-5 sm:p-6"
@@ -231,7 +282,6 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
           </section>
         </div>
 
-        {/* Right Column: Tuition, Cohorts & Phase 1 Disabled Enroll CTA */}
         <Card
           as="aside"
           specLabel="TUITION & ENROLLMENT"
@@ -247,23 +297,25 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
             />
 
             <div className="rounded-[var(--radius-sm)] border border-[var(--color-border-hairline)] bg-[var(--color-bg-subtle)] p-3.5 text-xs space-y-2">
-              <p className="font-clinical-mono font-semibold uppercase text-[var(--color-text-primary)]">
-                Open Intake Cohorts
-              </p>
+              <label
+                htmlFor="cohort-select"
+                className="block font-clinical-mono font-semibold uppercase text-[var(--color-text-primary)]"
+              >
+                Select Open Intake Cohort
+              </label>
               {course.cohorts.length > 0 ? (
-                <ul className="space-y-1.5 text-[var(--color-text-secondary)]">
+                <select
+                  id="cohort-select"
+                  value={selectedCohortId}
+                  onChange={(e) => setSelectedCohortId(e.target.value)}
+                  className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text-primary)]"
+                >
                   {course.cohorts.map((cohort) => (
-                    <li
-                      key={cohort.id}
-                      className="flex items-center justify-between gap-2"
-                    >
-                      <span className="font-medium">{cohort.name}</span>
-                      <span className="font-clinical-mono text-[11px]">
-                        Starts {cohort.starts_on} ({cohort.capacity} seats)
-                      </span>
-                    </li>
+                    <option key={cohort.id} value={cohort.id}>
+                      {cohort.name} — Starts {cohort.starts_on} ({cohort.capacity} seats)
+                    </option>
                   ))}
-                </ul>
+                </select>
               ) : (
                 <p className="text-[var(--color-text-muted)]">
                   Next intake dates announcing shortly.
@@ -271,12 +323,33 @@ export function CourseDetailPage({ audience }: CourseDetailPageProps) {
               )}
             </div>
 
+            {enrollError && (
+              <div
+                role="alert"
+                className="rounded-[var(--radius-sm)] border border-[var(--color-badge-residency-required-border)] bg-[var(--color-status-danger-bg)] p-3 text-xs text-[var(--color-status-danger-text)]"
+              >
+                {enrollError}
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Button fullWidth size="lg" disabled>
-                Enroll via DPO Pay (Unlocks in Phase 2)
+              <Button
+                fullWidth
+                size="lg"
+                isLoading={isEnrolling}
+                disabled={course.cohorts.length === 0}
+                onClick={() => {
+                  void handleEnrollClick();
+                }}
+              >
+                {user
+                  ? "Enroll in Cohort (Pending Payment)"
+                  : "Sign In or Register to Enroll →"}
               </Button>
               <p className="text-center font-clinical-mono text-[11px] text-[var(--color-text-muted)]">
-                Student registration &amp; session auth activate in Phase 2.
+                {user
+                  ? "Creates a pending enrollment scoped to your account."
+                  : "Server computes local (KES) vs international (USD) fee from your profile."}
               </p>
             </div>
           </div>

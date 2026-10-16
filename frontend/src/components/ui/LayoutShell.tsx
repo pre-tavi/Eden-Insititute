@@ -1,30 +1,43 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { AuthUser } from "../../types/auth";
 import type { AudienceTier } from "../../types/catalog";
-
-/* ============================================================================
- * 9. NAVBAR COMPONENT (Mobile-First with Audience Currency Toggle & Timezone)
- * ========================================================================== */
 
 export interface NavbarProps {
   audience: AudienceTier;
   onAudienceChange: (audience: AudienceTier) => void;
+  user?: AuthUser | null;
+  onLogout?: () => Promise<void>;
 }
 
-export function Navbar({ audience, onAudienceChange }: NavbarProps) {
+export function Navbar({
+  audience,
+  onAudienceChange,
+  user,
+  onLogout,
+}: NavbarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const detectedTimezone =
-    typeof Intl !== "undefined"
+    user?.profile?.timezone ||
+    (typeof Intl !== "undefined"
       ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Nairobi"
-      : "Africa/Nairobi";
+      : "Africa/Nairobi");
 
   const isActive = (path: string) =>
     path === "/"
       ? location.pathname === "/" || location.pathname.startsWith("/courses")
       : location.pathname.startsWith(path);
 
+  const handleLogoutClick = async () => {
+    if (onLogout) {
+      await onLogout();
+      navigate("/");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)]">
-      {/* Top Clinical Telemetry Strip */}
       <div className="bg-[var(--color-bg-inverse)] px-4 py-1.5 text-[var(--color-text-inverse)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 font-clinical-mono text-[11px]">
           <span>
@@ -36,7 +49,6 @@ export function Navbar({ audience, onAudienceChange }: NavbarProps) {
         </div>
       </div>
 
-      {/* Main Navigation Row */}
       <nav
         aria-label="Primary Navigation"
         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3.5"
@@ -74,20 +86,45 @@ export function Navbar({ audience, onAudienceChange }: NavbarProps) {
             >
               My Learning
             </Link>
-            <Link
-              to="/login"
-              aria-current={isActive("/login") ? "page" : undefined}
-              className={
-                isActive("/login")
-                  ? "text-[var(--color-accent-terracotta)] underline underline-offset-4"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-              }
-            >
-              Sign In
-            </Link>
+
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden sm:inline font-clinical-mono text-xs text-[var(--color-text-muted)]">
+                  {user.profile?.display_name || user.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogoutClick();
+                  }}
+                  className="text-xs font-clinical-mono uppercase tracking-wider text-[var(--color-accent-terracotta)] hover:underline"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/login"
+                  aria-current={isActive("/login") ? "page" : undefined}
+                  className={
+                    isActive("/login")
+                      ? "text-[var(--color-accent-terracotta)] underline underline-offset-4"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  }
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="rounded-[var(--radius-sm)] bg-[var(--color-brand-primary)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-primary-hover)]"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Audience Fee Selector (Preview Toggle; Server enforces authority at checkout) */}
           <div
             role="group"
             aria-label="Select Tuition Currency Display"
@@ -125,10 +162,6 @@ export function Navbar({ audience, onAudienceChange }: NavbarProps) {
     </header>
   );
 }
-
-/* ============================================================================
- * 10. FOOTER COMPONENT
- * ========================================================================== */
 
 export function Footer() {
   return (

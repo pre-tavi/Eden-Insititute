@@ -42,10 +42,10 @@
 
 ### Phase 2: Student Access & Enrollment Shell (`branch: p2-auth`, tag: `v0.2-p2`)
 
-- [ ] **Task 2.1:** `backend/apps/accounts/views.py` & `serializers.py` — Session auth endpoints (`register`, `login`, `logout`, `verify-email`, `password-reset`, `me`) with `django-axes` rate limiting and server-side Cloudflare Turnstile verification.
-- [ ] **Task 2.2:** `backend/apps/enrollments/models.py` & `views.py` — `Enrollment` model (`pending_payment | active | completed | withdrawn | refunded`) scoped via `Enrollment.objects.for_user(request.user)`.
-- [ ] **Task 2.3:** `frontend/src/context/AuthContext.tsx` & `frontend/src/pages/MyLearningPage.tsx` — Login/Register forms using `useState`, protected route wrappers, and student enrollment dashboard.
-- [ ] **Task 2.4:** `backend/tests/test_isolation.py` — Two-user isolation tests verifying Student A receives `404` when querying Student B's enrollment.
+- [x] **Task 2.1:** `backend/apps/accounts/views.py` & `serializers.py` — Session auth endpoints (`register`, `login`, `logout`, `verify-email`, `password-reset`, `me`) with `django-axes` rate limiting and server-side Cloudflare Turnstile verification.
+- [x] **Task 2.2:** `backend/apps/enrollments/models.py` & `views.py` — `Enrollment` model (`pending_payment | active | completed | withdrawn | refunded`) scoped via `Enrollment.objects.for_user(request.user)`.
+- [x] **Task 2.3:** `frontend/src/context/AuthContext.tsx` & `frontend/src/pages/MyLearningPage.tsx` — Login/Register forms using `useState`, protected route wrappers, and student enrollment dashboard.
+- [x] **Task 2.4:** `backend/tests/test_isolation.py` — Two-user isolation tests verifying Student A receives `404` when querying Student B's enrollment.
 
 ### Phase 3: DPO Pay Integration (`branch: p3-payments`, tag: `v0.3-p3`)
 
