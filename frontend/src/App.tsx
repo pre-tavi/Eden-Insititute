@@ -1,86 +1,69 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
+import { Footer, Navbar } from "./components/ui";
+import { CatalogPage } from "./pages/CatalogPage";
+import { CourseDetailPage } from "./pages/CourseDetailPage";
+import type { AudienceTier } from "./types/catalog";
 
-function CatalogShell() {
+function AuthPlaceholderPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-        Dr. Violet&apos;s Psychology Programmes
-      </h1>
-      <p className="mt-2 text-slate-600">
-        Certificate and Diploma courses with live lectures and optional 5-day practical
-        residency blocks in Nairobi and Embu.
-      </p>
+    <section className="mx-auto max-w-md px-4 py-12">
+      <div className="rounded-[var(--radius-md)] border border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)] p-6 shadow-[var(--shadow-card)]">
+        <p className="font-clinical-mono text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-terracotta)]">
+          Phase 2 · Student Access Gate
+        </p>
+        <h1 className="mt-1 font-editorial text-2xl font-semibold text-[var(--color-text-primary)]">
+          Student Portal Sign In
+        </h1>
+        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Protected by server-side Django session authentication, Argon2id password hashing, and
+          HttpOnly + SameSite=Lax cookies.
+        </p>
+      </div>
     </section>
   );
 }
 
-function CourseDetailShell() {
+function MyLearningPlaceholderPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">Course Detail</h1>
-      <p className="mt-2 text-slate-600">
-        Course outline, local (KES) and international (USD) pricing, and residency details.
-      </p>
-    </section>
-  );
-}
-
-function AuthShell() {
-  return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">Student Portal Access</h1>
-      <p className="mt-2 text-slate-600">
-        Protected by server-side Django session authentication and CSRF cookies.
-      </p>
-    </section>
-  );
-}
-
-function MyLearningShell() {
-  return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">My Learning</h1>
-      <p className="mt-2 text-slate-600">
-        Track lesson progress, join live Google Meet lectures, and manage residency bookings.
-      </p>
+    <section className="mx-auto max-w-5xl px-4 py-12">
+      <div className="rounded-[var(--radius-md)] border border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)] p-6 shadow-[var(--shadow-card)]">
+        <p className="font-clinical-mono text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-terracotta)]">
+          Student Classroom Shell
+        </p>
+        <h1 className="mt-1 font-editorial text-2xl font-semibold text-[var(--color-text-primary)]">
+          My Learning Dashboard
+        </h1>
+        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+          View active cohort enrollments, resume signed video lessons, join live Google Meet
+          lectures in your local timezone, and book 5-day Nairobi or Embu residency blocks.
+        </p>
+      </div>
     </section>
   );
 }
 
 export default function App() {
+  const [audience, setAudience] = useState<AudienceTier>("local");
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-slate-200 bg-white">
-        <nav
-          aria-label="Primary Navigation"
-          className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4"
-        >
-          <Link to="/" className="text-lg font-bold text-slate-900">
-            EdenLMS
-          </Link>
-          <div className="flex items-center gap-6 text-sm font-medium text-slate-700">
-            <Link to="/" className="hover:text-slate-950">
-              Catalog
-            </Link>
-            <Link to="/my-learning" className="hover:text-slate-950">
-              My Learning
-            </Link>
-            <Link to="/login" className="hover:text-slate-950">
-              Sign In
-            </Link>
-          </div>
-        </nav>
-      </header>
+    <div className="min-h-screen flex flex-col bg-[var(--color-bg-canvas)] text-[var(--color-text-primary)]">
+      <Navbar audience={audience} onAudienceChange={setAudience} />
 
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<CatalogShell />} />
-          <Route path="/courses/:slug" element={<CourseDetailShell />} />
-          <Route path="/login" element={<AuthShell />} />
-          <Route path="/register" element={<AuthShell />} />
-          <Route path="/my-learning" element={<MyLearningShell />} />
+          <Route path="/" element={<CatalogPage audience={audience} />} />
+          <Route
+            path="/courses/:slug"
+            element={<CourseDetailPage audience={audience} />}
+          />
+          <Route path="/login" element={<AuthPlaceholderPage />} />
+          <Route path="/register" element={<AuthPlaceholderPage />} />
+          <Route path="/my-learning" element={<MyLearningPlaceholderPage />} />
         </Routes>
       </main>
+
+      <Footer />
     </div>
   );
 }

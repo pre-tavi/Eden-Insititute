@@ -35,10 +35,10 @@
 
 ### Phase 1: Visual Design System & Catalog UI (`branch: p1-design`, tag: `v0.1-p1`)
 
-- [ ] **Task 1.1:** `docs/mockups/art-direction-a.html` & `docs/mockups/art-direction-b.html` — Two static HTML art direction mockups (Catalog + Course Detail) for approval prior to React build.
-- [ ] **Task 1.2:** `frontend/src/styles/tokens.css` — CSS custom properties for color palette, typography scale, spacing, radii, and elevation shadows.
-- [ ] **Task 1.3:** `frontend/src/components/ui/*` — Reusable primitives: `Button`, `Card`, `Badge` (`level`, `residency`), `PriceTag` (local KES vs. international USD), `ProgressBar`, `Navbar`, `Footer`, `EmptyState`, `Skeleton`, `ErrorState`.
-- [ ] **Task 1.4:** `frontend/src/pages/CatalogPage.tsx` & `frontend/src/pages/CourseDetailPage.tsx` — Mobile-first WCAG AA pages powered by live DRF catalog data and `React Router`.
+- [x] **Task 1.1:** `docs/mockups/art-direction-a.html` & `docs/mockups/art-direction-b.html` — Two static HTML art direction mockups (Catalog + Course Detail) for approval prior to React build.
+- [x] **Task 1.2:** `frontend/src/styles/tokens.css` — CSS custom properties for color palette, typography scale, spacing, radii, and elevation shadows.
+- [x] **Task 1.3:** `frontend/src/components/ui/*` — Reusable primitives: `Button`, `Card`, `Badge` (`level`, `residency`), `PriceTag` (local KES vs. international USD), `ProgressBar`, `Navbar`, `Footer`, `EmptyState`, `Skeleton`, `ErrorState`.
+- [x] **Task 1.4:** `frontend/src/pages/CatalogPage.tsx` & `frontend/src/pages/CourseDetailPage.tsx` — Mobile-first WCAG AA pages powered by live DRF catalog data and `React Router`.
 
 ### Phase 2: Student Access & Enrollment Shell (`branch: p2-auth`, tag: `v0.2-p2`)
 

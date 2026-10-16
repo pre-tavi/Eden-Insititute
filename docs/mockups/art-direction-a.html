@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Art Direction A: Highland Monograph — Dr. Violet's LMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-canvas: #faf7f2;
+        --bg-surface: #ffffff;
+        --bg-subtle: #f2ece1;
+        --text-primary: #132a23;
+        --text-secondary: #3f524b;
+        --text-muted: #5c6e67;
+        --accent-primary: #132a23;
+        --accent-warm: #9a3412;
+        --accent-warm-bg: #fff4ed;
+        --badge-cert-bg: #e6f2ed;
+        --badge-cert-text: #0f4c3a;
+        --badge-dip-bg: #efe8f8;
+        --badge-dip-text: #462669;
+        --border-hairline: #dcd4c6;
+        --border-strong: #132a23;
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --shadow-card: 0 2px 10px rgba(19, 42, 35, 0.05);
+        --font-serif: "Newsreader", Georgia, serif;
+        --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--bg-canvas);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a,
+      button {
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      a:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--accent-warm);
+        outline-offset: 2px;
+      }
+
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      /* Top Direction Banner */
+      .direction-bar {
+        background: var(--text-primary);
+        color: #faf7f2;
+        font-size: 0.78rem;
+        padding: 0.55rem 1rem;
+        border-bottom: 2px solid var(--accent-warm);
+      }
+
+      .direction-bar-inner {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .direction-tag {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #fcd34d;
+      }
+
+      /* Navigation */
+      .navbar {
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-hairline);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .navbar-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        gap: 1rem;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: var(--text-primary);
+      }
+
+      .brand-title {
+        font-family: var(--font-serif);
+        font-size: 1.45rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      .brand-subtitle {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-top: 0.15rem;
+      }
+
+      .nav-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .segmented-control {
+        display: inline-flex;
+        background: var(--bg-subtle);
+        padding: 0.2rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-hairline);
+      }
+
+      .segmented-btn {
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.4rem 0.75rem;
+        border-radius: 3px;
+        transition: all 0.15s ease;
+      }
+
+      .segmented-btn[aria-pressed="true"] {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      /* Editorial Header */
+      .editorial-header {
+        padding: 2.5rem 0 2rem;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .editorial-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      @media (min-width: 768px) {
+        .editorial-grid {
+          grid-template-columns: 2fr 1fr;
+          align-items: end;
+        }
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--accent-warm);
+        font-weight: 600;
+        margin-bottom: 0.6rem;
+      }
+
+      .headline {
+        font-family: var(--font-serif);
+        font-size: clamp(1.9rem, 4vw, 2.85rem);
+        font-weight: 500;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .lead-copy {
+        margin-top: 0.85rem;
+        color: var(--text-secondary);
+        font-size: 1.02rem;
+        max-width: 62ch;
+      }
+
+      .tuition-benchmark-box {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-hairline);
+        border-left: 3px solid var(--accent-primary);
+        padding: 1rem 1.15rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.84rem;
+      }
+
+      .tuition-benchmark-title {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+
+      /* Filter Bar */
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 0;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .filter-pill {
+        border: 1px solid var(--border-hairline);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        font-weight: 600;
+      }
+
+      .filter-pill[aria-pressed="true"] {
+        background: var(--accent-primary);
+        color: #ffffff;
+        border-color: var(--accent-primary);
+      }
+
+      /* Catalog Grid */
+      .catalog-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding-bottom: 3rem;
+      }
+
+      @media (min-width: 768px) {
+        .catalog-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .course-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-card);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.25rem;
+      }
+
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.22rem 0.6rem;
+        border-radius: var(--radius-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .badge-certificate {
+        background: var(--badge-cert-bg);
+        color: var(--badge-cert-text);
+      }
+
+      .badge-diploma {
+        background: var(--badge-dip-bg);
+        color: var(--badge-dip-text);
+      }
+
+      .badge-residency-optional {
+        background: var(--accent-warm-bg);
+        color: var(--accent-warm);
+        border: 1px solid #f9d2b8;
+      }
+
+      .badge-residency-required {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+
+      .badge-residency-none {
+        background: #f1f5f9;
+        color: #334155;
+      }
+
+      .card-title {
+        font-family: var(--font-serif);
+        font-size: 1.45rem;
+        font-weight: 600;
+        line-height: 1.25;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-summary {
+        color: var(--text-secondary);
+        font-size: 0.94rem;
+      }
+
+      .meta-list {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
+        border-top: 1px dashed var(--border-hairline);
+        list-style: none;
+        font-size: 0.84rem;
+        color: var(--text-secondary);
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .card-footer {
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-hairline);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .price-block {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .price-label {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .price-value {
+        font-family: var(--font-mono);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .price-compare {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .btn-primary {
+        background: var(--accent-primary);
+        color: #ffffff;
+        border: 1px solid var(--accent-primary);
+        padding: 0.65rem 1.15rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+
+      .btn-primary:hover {
+        background: #1d3f35;
+      }
+
+      .btn-disabled {
+        background: #e5e0d5;
+        color: #5c6e67;
+        border: 1px solid #cdc6b8;
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: not-allowed;
+        width: 100%;
+      }
+
+      /* Course Detail View */
+      .detail-layout {
+        padding: 2rem 0 4rem;
+        display: none;
+      }
+
+      .detail-layout.active {
+        display: block;
+      }
+
+      .catalog-section.hidden {
+        display: none;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin-top: 1.25rem;
+      }
+
+      @media (min-width: 900px) {
+        .detail-grid {
+          grid-template-columns: 1.75fr 1fr;
+          align-items: start;
+        }
+      }
+
+      .syllabus-box,
+      .residency-callout,
+      .enrollment-panel {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+      }
+
+      .residency-callout {
+        background: var(--accent-warm-bg);
+        border-color: #f3c6a5;
+        margin-top: 1.5rem;
+      }
+
+      .module-item {
+        padding: 0.9rem 0;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .module-item:last-child {
+        border-bottom: none;
+      }
+
+      .module-title {
+        font-weight: 600;
+        font-size: 0.96rem;
+      }
+
+      .module-meta {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--text-muted);
+      }
+
+      .footer {
+        border-top: 1px solid var(--border-hairline);
+        padding: 2rem 0;
+        font-size: 0.84rem;
+        color: var(--text-muted);
+        background: var(--bg-surface);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="direction-bar" role="region" aria-label="Art Direction Metadata">
+      <div class="direction-bar-inner">
+        <span>
+          <strong class="direction-tag">Art Direction A · Highland Monograph</strong>
+          — Warm Parchment &amp; Deep Forest Slate · Newsreader + Plus Jakarta Sans + JetBrains Mono
+        </span>
+        <span>Mobile-First (360px+) · WCAG AA Contrast Verified</span>
+      </div>
+    </div>
+
+    <header class="navbar">
+      <div class="container navbar-inner">
+        <a href="#catalog" class="brand" id="brand-link">
+          <span class="brand-title">Dr. Violet&apos;s Institute of Psychology</span>
+          <span class="brand-subtitle">International Certificate &amp; Diploma Programmes</span>
+        </a>
+
+        <div class="nav-controls">
+          <div class="segmented-control" role="group" aria-label="Switch Screen Preview">
+            <button type="button" class="segmented-btn" id="view-catalog-btn" aria-pressed="true">
+              1. Catalog Screen
+            </button>
+            <button type="button" class="segmented-btn" id="view-detail-btn" aria-pressed="false">
+              2. Course Detail Screen
+            </button>
+          </div>
+
+          <div class="segmented-control" role="group" aria-label="Select Tuition Audience">
+            <button type="button" class="segmented-btn" id="aud-local-btn" aria-pressed="true">
+              Local (KES)
+            </button>
+            <button type="button" class="segmented-btn" id="aud-intl-btn" aria-pressed="false">
+              International (USD)
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- SCREEN 1: CATALOG -->
+      <section id="catalog-screen" class="catalog-section" aria-labelledby="catalog-heading">
+        <div class="editorial-header">
+          <div class="editorial-grid">
+            <div>
+              <p class="eyebrow">Academic Registry · 2026 / 2027 Cohorts</p>
+              <h1 id="catalog-heading" class="headline">
+                Rigorous Clinical &amp; Counselling Training with Live Faculty Supervision.
+              </h1>
+              <p class="lead-copy">
+                Every programme combines weekly live Google Meet lectures (rendered in your local
+                timezone), protected playback recordings, and 5-day practical residency blocks in
+                Nairobi and Embu.
+              </p>
+            </div>
+
+            <aside class="tuition-benchmark-box" aria-label="Tuition Transparency Note">
+              <p class="tuition-benchmark-title">Global Tuition Benchmark</p>
+              <p>
+                Comparable Western US/UK programmes charge <strong>$1,200–$3,000</strong> for
+                Certificates and <strong>$5,000–$12,000</strong> for Diplomas. Digital
+                infrastructure &amp; secure video hosting are included in tuition.
+              </p>
+            </aside>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filter-group" role="group" aria-label="Filter Programmes by Level">
+            <button type="button" class="filter-pill" data-filter="all" aria-pressed="true">
+              All Programmes (3)
+            </button>
+            <button type="button" class="filter-pill" data-filter="certificate" aria-pressed="false">
+              Certificate (35K–45K KES / $550–$750)
+            </button>
+            <button type="button" class="filter-pill" data-filter="diploma" aria-pressed="false">
+              Diploma (130K–180K KES / $1,800)
+            </button>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted)">
+            Timezone: Africa/Nairobi (EAT · UTC+3)
+          </span>
+        </div>
+
+        <div class="catalog-grid" id="course-grid">
+          <!-- Card 1: Certificate (Optional Residency) -->
+          <article class="course-card" data-level="certificate">
+            <div>
+              <div class="badge-row">
+                <span class="badge badge-certificate">Certificate</span>
+                <span class="badge badge-residency-optional">
+                  Optional 5-Day Nairobi / Embu Residency
+                </span>
+              </div>
+              <h2 class="card-title">Certificate in Counselling Psychology</h2>
+              <p class="card-summary">
+                Foundational therapeutic ethics, active listening, trauma-informed intake, and
+                supervised case formulations delivered through weekly live lectures.
+              </p>
+              <ul class="meta-list">
+                <li><strong>Delivery:</strong> Weekly Live Google Meet Lectures + Signed Video Playbacks</li>
+                <li><strong>Practical Block:</strong> Optional 5-day residency in Nairobi or Embu ($100 USD lunch &amp; teas)</li>
+                <li><strong>Next Cohort:</strong> January 15, 2027 Intake (30 seats)</li>
+              </ul>
+            </div>
+
+            <div class="card-footer">
+              <div class="price-block">
+                <span class="price-label">Programme Tuition</span>
+                <span
+                  class="price-value"
+                  data-kes="KES 35,000"
+                  data-usd="USD 550"
+                >
+                  KES 35,000
+                </span>
+                <span class="price-compare">US/UK Equivalent: $1,200 – $3,000</span>
+              </div>
+              <button type="button" class="btn-primary open-detail-trigger">
+                View Syllabus &amp; Details →
+              </button>
+            </div>
+          </article>
+
+          <!-- Card 2: Diploma (Required Residency) -->
+          <article class="course-card" data-level="diploma">
+            <div>
+              <div class="badge-row">
+                <span class="badge badge-diploma">Diploma</span>
+                <span class="badge badge-residency-required">
+                  Required 5-Day Nairobi / Embu Residency
+                </span>
+              </div>
+              <h2 class="card-title">Diploma in Clinical &amp; Applied Psychology</h2>
+              <p class="card-summary">
+                Comprehensive psychometric assessment, psychopathology, group therapy leadership,
+                and mandatory in-person clinical practicum evaluation.
+              </p>
+              <ul class="meta-list">
+                <li><strong>Delivery:</strong> Live Faculty Seminars + Protected Playback Library</li>
+                <li><strong>Practical Block:</strong> 5-day residency in Nairobi or Embu ($100 USD lunch &amp; teas)</li>
+                <li><strong>Next Cohort:</strong> February 1, 2027 Intake (25 seats)</li>
+              </ul>
+            </div>
+
+            <div class="card-footer">
+              <div class="price-block">
+                <span class="price-label">Programme Tuition</span>
+                <span
+                  class="price-value"
+                  data-kes="KES 180,000"
+                  data-usd="USD 1,800"
+                >
+                  KES 180,000
+                </span>
+                <span class="price-compare">US/UK Equivalent: $5,000 – $12,000</span>
+              </div>
+              <button type="button" class="btn-primary open-detail-trigger">
+                View Syllabus &amp; Details →
+              </button>
+            </div>
+          </article>
+
+          <!-- Card 3: Certificate (100% Online / No Residency) -->
+          <article class="course-card" data-level="certificate">
+            <div>
+              <div class="badge-row">
+                <span class="badge badge-certificate">Certificate</span>
+                <span class="badge badge-residency-none">100% Online (No Residency)</span>
+              </div>
+              <h2 class="card-title">Certificate in Child &amp; Adolescent Development</h2>
+              <p class="card-summary">
+                Developmental milestones, school-based behavioural interventions, and family systems
+                guidance tailored for remote international practitioners.
+              </p>
+              <ul class="meta-list">
+                <li><strong>Delivery:</strong> 100% Online Live Lectures + Signed Playback Recordings</li>
+                <li><strong>Practical Block:</strong> Remote case supervision (no physical residency)</li>
+                <li><strong>Next Cohort:</strong> March 1, 2027 Intake (30 seats)</li>
+              </ul>
+            </div>
+
+            <div class="card-footer">
+              <div class="price-block">
+                <span class="price-label">Programme Tuition</span>
+                <span
+                  class="price-value"
+                  data-kes="KES 45,000"
+                  data-usd="USD 750"
+                >
+                  KES 45,000
+                </span>
+                <span class="price-compare">US/UK Equivalent: $1,200 – $3,000</span>
+              </div>
+              <button type="button" class="btn-primary open-detail-trigger">
+                View Syllabus &amp; Details →
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: COURSE DETAIL -->
+      <section id="detail-screen" class="detail-layout" aria-labelledby="detail-heading">
+        <button
+          type="button"
+          id="back-to-catalog-btn"
+          style="background: none; border: none; color: var(--accent-warm); font-weight: 600; margin-bottom: 1rem"
+        >
+          ← Back to Programme Catalog
+        </button>
+
+        <div class="badge-row">
+          <span class="badge badge-certificate">Certificate Level</span>
+          <span class="badge badge-residency-optional">
+            Optional 5-Day Practical Block (Nairobi / Embu)
+          </span>
+        </div>
+
+        <h1 id="detail-heading" class="headline">Certificate in Counselling Psychology</h1>
+        <p class="lead-copy">
+          Designed and led by Dr. Violet. Combines weekly synchronous Google Meet lectures with
+          watermarked on-demand video playbacks and an optional 5-day clinical residency in Nairobi
+          or Embu.
+        </p>
+
+        <div class="detail-grid">
+          <div>
+            <div class="syllabus-box">
+              <h2 class="card-title">Curriculum &amp; Module Outline</h2>
+              <div class="module-item">
+                <p class="module-meta">MODULE 01 · WEEKS 1–3 · LIVE + SIGNED VIDEO PLAYBACK</p>
+                <p class="module-title">Foundations of Therapeutic Ethics &amp; Boundaries</p>
+                <p class="card-summary">
+                  Informed consent, confidentiality frameworks across Kenya and international
+                  jurisdictions, and clinical intake interviewing.
+                </p>
+              </div>
+              <div class="module-item">
+                <p class="module-meta">MODULE 02 · WEEKS 4–6 · LIVE + SIGNED VIDEO PLAYBACK</p>
+                <p class="module-title">Person-Centred &amp; Cognitive Behavioural Modalities</p>
+                <p class="card-summary">
+                  Structuring therapeutic sessions, identifying cognitive distortions, and tracking
+                  client progress.
+                </p>
+              </div>
+              <div class="module-item">
+                <p class="module-meta">MODULE 03 · WEEKS 7–10 · LIVE + CASE FORMULATION</p>
+                <p class="module-title">Trauma-Informed Care &amp; Crisis Intervention</p>
+                <p class="card-summary">
+                  Stabilization techniques, psychological first aid, and referral pathways.
+                </p>
+              </div>
+            </div>
+
+            <div class="residency-callout" role="region" aria-label="5-Day Practical Residency Details">
+              <p class="eyebrow">5-Day Practical Block · Nairobi &amp; Embu Campuses</p>
+              <h3 class="card-title" style="font-size: 1.2rem">
+                In-Person Clinical Practicum (Optional for Certificate Students)
+              </h3>
+              <p class="card-summary" style="margin-top: 0.35rem">
+                Students wishing to attend a 5-day practical residency block in
+                <strong>Nairobi</strong> or <strong>Embu</strong> pay a separate
+                <strong>$100 USD</strong> residency fee covering daily lunch and teas. Travel and
+                lodging remain the student&apos;s responsibility.
+              </p>
+            </div>
+          </div>
+
+          <aside class="enrollment-panel" aria-label="Tuition and Cohort Enrollment">
+            <p class="price-label">Selected Audience Tuition</p>
+            <p
+              class="price-value"
+              style="font-size: 2rem; margin: 0.25rem 0"
+              data-kes="KES 35,000"
+              data-usd="USD 550"
+            >
+              KES 35,000
+            </p>
+            <p class="price-compare" style="margin-bottom: 1rem">
+              Includes Digital Infrastructure Fee (LMS licence + secure class video hosting).
+              Direct payment processed via DPO Pay.
+            </p>
+
+            <div
+              style="background: var(--bg-subtle); padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.85rem"
+            >
+              <p><strong>Cohort:</strong> January 15, 2027 Intake</p>
+              <p><strong>Live Lecture Slot:</strong> Thursdays 18:00 EAT (15:00 UTC)</p>
+              <p><strong>Residency Fee:</strong> $100 USD (Optional · Book after enrollment)</p>
+            </div>
+
+            <button type="button" class="btn-disabled" disabled aria-disabled="true">
+              Enroll via DPO Pay (Unlocks in Phase 2 Auth)
+            </button>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.6rem; text-align: center">
+              Student registration &amp; session authentication activate in Phase 2.
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>
+          © 2026 Dr. Violet&apos;s LMS (EdenLMS) · Powered by Django 5.2 LTS, DRF &amp; DPO Pay ·
+          All live session times stored in UTC.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      const catalogScreen = document.getElementById("catalog-screen");
+      const detailScreen = document.getElementById("detail-screen");
+      const viewCatalogBtn = document.getElementById("view-catalog-btn");
+      const viewDetailBtn = document.getElementById("view-detail-btn");
+      const backBtn = document.getElementById("back-to-catalog-btn");
+      const audLocalBtn = document.getElementById("aud-local-btn");
+      const audIntlBtn = document.getElementById("aud-intl-btn");
+      const priceNodes = document.querySelectorAll("[data-kes][data-usd]");
+      const filterButtons = document.querySelectorAll("[data-filter]");
+      const cards = document.querySelectorAll(".course-card");
+
+      function showScreen(screen) {
+        if (screen === "detail") {
+          catalogScreen.classList.add("hidden");
+          detailScreen.classList.add("active");
+          viewCatalogBtn.setAttribute("aria-pressed", "false");
+          viewDetailBtn.setAttribute("aria-pressed", "true");
+        } else {
+          catalogScreen.classList.remove("hidden");
+          detailScreen.classList.remove("active");
+          viewCatalogBtn.setAttribute("aria-pressed", "true");
+          viewDetailBtn.setAttribute("aria-pressed", "false");
+        }
+      }
+
+      viewCatalogBtn.addEventListener("click", () => showScreen("catalog"));
+      viewDetailBtn.addEventListener("click", () => showScreen("detail"));
+      backBtn.addEventListener("click", () => showScreen("catalog"));
+      document.querySelectorAll(".open-detail-trigger").forEach((btn) => {
+        btn.addEventListener("click", () => showScreen("detail"));
+      });
+
+      function setAudience(aud) {
+        const isLocal = aud === "local";
+        audLocalBtn.setAttribute("aria-pressed", String(isLocal));
+        audIntlBtn.setAttribute("aria-pressed", String(!isLocal));
+        priceNodes.forEach((node) => {
+          node.textContent = isLocal ? node.getAttribute("data-kes") : node.getAttribute("data-usd");
+        });
+      }
+
+      audLocalBtn.addEventListener("click", () => setAudience("local"));
+      audIntlBtn.addEventListener("click", () => setAudience("intl"));
+
+      filterButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const level = btn.getAttribute("data-filter");
+          filterButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+          cards.forEach((card) => {
+            const match = level === "all" || card.getAttribute("data-level") === level;
+            card.style.display = match ? "flex" : "none";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

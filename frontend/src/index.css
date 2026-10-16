@@ -1,1 +1,62 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
+
+@layer base {
+  html {
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-editorial {
+    font-family: var(--font-display);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.015em;
+  }
+
+  code,
+  pre,
+  .font-clinical-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Universal WCAG AA Keyboard Focus Ring */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Shimmer animation for zero-layout-shift Skeleton loaders */
+@keyframes eden-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.48;
+  }
+}
+
+.animate-eden-skeleton {
+  animation: eden-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: var(--color-bg-muted);
+}

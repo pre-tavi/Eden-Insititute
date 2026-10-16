@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Art Direction B: Clinical Precision — Dr. Violet's LMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-canvas: #f4f6f9;
+        --bg-surface: #ffffff;
+        --bg-panel: #eaf0f8;
+        --text-primary: #0f172a;
+        --text-secondary: #334155;
+        --text-muted: #475569;
+        --accent-cobalt: #1d4ed8;
+        --accent-cobalt-dark: #1e3a8a;
+        --accent-teal: #0f766e;
+        --border-grid: #cbd5e1;
+        --border-dark: #0f172a;
+        --font-display: "Instrument Serif", Georgia, serif;
+        --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+        --font-mono: "IBM Plex Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg-canvas);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button {
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--accent-cobalt);
+        outline-offset: 2px;
+      }
+
+      .shell {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      .meta-strip {
+        background: var(--border-dark);
+        color: #f8fafc;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+      }
+
+      .meta-strip-inner {
+        max-width: 1160px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      .topbar {
+        background: var(--bg-surface);
+        border-bottom: 2px solid var(--border-dark);
+      }
+
+      .topbar-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.95rem 0;
+        gap: 1rem;
+      }
+
+      .identity {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+      }
+
+      .identity-mark {
+        font-family: var(--font-display);
+        font-size: 1.75rem;
+        line-height: 1;
+        color: var(--text-primary);
+      }
+
+      .identity-code {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        padding: 0.15rem 0.45rem;
+        background: var(--bg-panel);
+        color: var(--accent-cobalt-dark);
+        font-weight: 600;
+      }
+
+      .control-cluster {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .switch-box {
+        display: inline-flex;
+        border: 1px solid var(--border-dark);
+        background: var(--bg-surface);
+      }
+
+      .switch-btn {
+        border: none;
+        background: transparent;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .switch-btn[aria-pressed="true"] {
+        background: var(--border-dark);
+        color: #ffffff;
+      }
+
+      /* Swiss Architectural Header */
+      .swiss-hero {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-grid);
+        border-top: none;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      @media (min-width: 820px) {
+        .swiss-hero {
+          grid-template-columns: 1.8fr 1fr;
+        }
+      }
+
+      .swiss-hero-main {
+        padding: 2rem 1.5rem;
+        border-bottom: 1px solid var(--border-grid);
+      }
+
+      @media (min-width: 820px) {
+        .swiss-hero-main {
+          border-bottom: none;
+          border-right: 1px solid var(--border-grid);
+        }
+      }
+
+      .swiss-hero-side {
+        padding: 1.5rem;
+        background: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 0.85rem;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent-cobalt);
+        font-weight: 600;
+      }
+
+      .display-title {
+        font-family: var(--font-display);
+        font-size: clamp(2.1rem, 4.5vw, 3.2rem);
+        font-weight: 400;
+        line-height: 1.08;
+        margin-top: 0.4rem;
+      }
+
+      .hero-desc {
+        margin-top: 0.75rem;
+        color: var(--text-secondary);
+        max-width: 60ch;
+        font-size: 0.96rem;
+      }
+
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.1rem 0;
+        gap: 0.75rem;
+      }
+
+      .tab-btn {
+        border: 1px solid var(--border-grid);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        padding: 0.45rem 0.85rem;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+
+      .tab-btn[aria-pressed="true"] {
+        border-color: var(--accent-cobalt);
+        background: var(--accent-cobalt);
+        color: #ffffff;
+      }
+
+      /* Swiss Grid Table-Cards */
+      .grid-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        padding-bottom: 3rem;
+      }
+
+      @media (min-width: 768px) {
+        .grid-cards {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      .spec-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-dark);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .spec-card-header {
+        padding: 0.75rem 1.15rem;
+        border-bottom: 1px solid var(--border-grid);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+
+      .spec-card-body {
+        padding: 1.25rem 1.15rem;
+      }
+
+      .spec-title {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        line-height: 1.15;
+        margin-bottom: 0.5rem;
+      }
+
+      .residency-tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+      }
+
+      .tag-opt {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .tag-req {
+        background: #CCFBF1;
+        color: #115e59;
+      }
+
+      .tag-none {
+        background: #e2e8f0;
+        color: #1e293b;
+      }
+
+      .spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+      }
+
+      .spec-table td {
+        padding: 0.4rem 0;
+        border-top: 1px solid var(--border-grid);
+        color: var(--text-secondary);
+      }
+
+      .spec-table td:first-child {
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        width: 42%;
+      }
+
+      .spec-card-footer {
+        padding: 1rem 1.15rem;
+        border-top: 2px solid var(--border-dark);
+        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .tuition-figure {
+        font-family: var(--font-mono);
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+
+      .action-btn {
+        background: var(--accent-cobalt);
+        color: #ffffff;
+        border: none;
+        padding: 0.55rem 0.9rem;
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        font-weight: 600;
+      }
+
+      .detail-pane {
+        display: none;
+        padding: 2rem 0 4rem;
+      }
+
+      .detail-pane.active {
+        display: block;
+      }
+
+      .catalog-pane.hidden {
+        display: none;
+      }
+
+      .detail-matrix {
+        display: grid;
+        grid-template-columns: 1fr;
+        border: 1px solid var(--border-dark);
+        background: var(--bg-surface);
+        margin-top: 1rem;
+      }
+
+      @media (min-width: 860px) {
+        .detail-matrix {
+          grid-template-columns: 2fr 1fr;
+        }
+      }
+
+      .matrix-left {
+        padding: 1.75rem;
+        border-bottom: 1px solid var(--border-dark);
+      }
+
+      @media (min-width: 860px) {
+        .matrix-left {
+          border-bottom: none;
+          border-right: 1px solid var(--border-dark);
+        }
+      }
+
+      .matrix-right {
+        padding: 1.75rem;
+        background: #f8fafc;
+      }
+
+      .cta-locked {
+        width: 100%;
+        padding: 0.85rem;
+        background: #cbd5e1;
+        color: #1e293b;
+        border: 1px solid #94a3b8;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: not-allowed;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="meta-strip" role="region" aria-label="Art Direction Metadata">
+      <div class="meta-strip-inner">
+        <span>ART DIRECTION B // CLINICAL PRECISION (SWISS ARCHITECTURAL GRID)</span>
+        <span>INSTRUMENT SERIF + INTER + IBM PLEX MONO // WCAG AA</span>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <div class="identity">
+          <span class="identity-mark">Dr. Violet&apos;s LMS</span>
+          <span class="identity-code">PSY-CATALOG-v0.1</span>
+        </div>
+
+        <div class="control-cluster">
+          <div class="switch-box" role="group" aria-label="Screen Selector">
+            <button type="button" class="switch-btn" id="b-catalog-btn" aria-pressed="true">
+              01_CATALOG
+            </button>
+            <button type="button" class="switch-btn" id="b-detail-btn" aria-pressed="false">
+              02_COURSE_DETAIL
+            </button>
+          </div>
+
+          <div class="switch-box" role="group" aria-label="Currency Selector">
+            <button type="button" class="switch-btn" id="b-kes-btn" aria-pressed="true">
+              LOCAL [KES]
+            </button>
+            <button type="button" class="switch-btn" id="b-usd-btn" aria-pressed="false">
+              INTL [USD]
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section id="b-catalog-pane" class="catalog-pane" aria-labelledby="b-hero-heading">
+        <div class="swiss-hero">
+          <div class="swiss-hero-main">
+            <p class="kicker">Accredited Clinical &amp; Counselling Track</p>
+            <h1 id="b-hero-heading" class="display-title">
+              Structured Psychological Training for Local &amp; International Cohorts.
+            </h1>
+            <p class="hero-desc">
+              Synchronous Google Meet lectures localized to your timezone, token-signed class
+              recordings, and 5-day practical residency blocks in Nairobi and Embu.
+            </p>
+          </div>
+          <div class="swiss-hero-side">
+            <div>
+              <p class="kicker" style="color: var(--text-primary)">FEE STRUCTURE BENCHMARK</p>
+              <p style="margin-top: 0.4rem">
+                Certificate: <strong>35–45K KES</strong> / <strong>$550–$750 USD</strong>
+                (vs. $1,200–$3,000 US/UK)
+              </p>
+              <p style="margin-top: 0.25rem">
+                Diploma: <strong>130–180K KES</strong> / <strong>$1,800 USD</strong>
+                (vs. $5,000–$12,000 US/UK)
+              </p>
+            </div>
+            <p style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted)">
+              CHECKOUT: DIRECT PAY VIA DPO LINK
+            </p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div role="group" aria-label="Level Filter">
+            <button type="button" class="tab-btn" data-b-filter="all" aria-pressed="true">
+              ALL [03]
+            </button>
+            <button type="button" class="tab-btn" data-b-filter="certificate" aria-pressed="false">
+              CERTIFICATE [02]
+            </button>
+            <button type="button" class="tab-btn" data-b-filter="diploma" aria-pressed="false">
+              DIPLOMA [01]
+            </button>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-muted)">
+            PRACTICAL BLOCK FEE: USD 100 (LUNCH &amp; TEAS INCLUDED)
+          </span>
+        </div>
+
+        <div class="grid-cards">
+          <!-- Card 1 -->
+          <article class="spec-card" data-b-level="certificate">
+            <div>
+              <div class="spec-card-header">
+                <span>LEVEL // CERTIFICATE</span>
+                <span>CODE: PSY-101</span>
+              </div>
+              <div class="spec-card-body">
+                <span class="residency-tag tag-opt">RESIDENCY: OPTIONAL (NAIROBI / EMBU)</span>
+                <h2 class="spec-title">Certificate in Counselling Psychology</h2>
+                <p style="font-size: 0.88rem; color: var(--text-secondary)">
+                  Core counselling competencies, ethical frameworks, and supervised live case
+                  discussions.
+                </p>
+                <table class="spec-table">
+                  <tbody>
+                    <tr>
+                      <td>DELIVERY</td>
+                      <td>Live Google Meet + Signed Video</td>
+                    </tr>
+                    <tr>
+                      <td>RESIDENCY</td>
+                      <td>5 Days Optional ($100 USD lunch/tea)</td>
+                    </tr>
+                    <tr>
+                      <td>WEST COMP.</td>
+                      <td>$1,200 – $3,000 USD</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="spec-card-footer">
+              <span class="tuition-figure" data-b-kes="KES 35,000" data-b-usd="USD 550">
+                KES 35,000
+              </span>
+              <button type="button" class="action-btn b-open-detail">INSPECT →</button>
+            </div>
+          </article>
+
+          <!-- Card 2 -->
+          <article class="spec-card" data-b-level="diploma">
+            <div>
+              <div class="spec-card-header">
+                <span>LEVEL // DIPLOMA</span>
+                <span>CODE: PSY-201</span>
+              </div>
+              <div class="spec-card-body">
+                <span class="residency-tag tag-req">RESIDENCY: REQUIRED (NAIROBI / EMBU)</span>
+                <h2 class="spec-title">Diploma in Clinical &amp; Applied Psychology</h2>
+                <p style="font-size: 0.88rem; color: var(--text-secondary)">
+                  Advanced diagnostic formulation, psychopathology, and mandatory 5-day practical
+                  block in Nairobi or Embu.
+                </p>
+                <table class="spec-table">
+                  <tbody>
+                    <tr>
+                      <td>DELIVERY</td>
+                      <td>Live Lectures + Signed Playback</td>
+                    </tr>
+                    <tr>
+                      <td>RESIDENCY</td>
+                      <td>5 Days Required ($100 USD lunch/tea)</td>
+                    </tr>
+                    <tr>
+                      <td>WEST COMP.</td>
+                      <td>$5,000 – $12,000 USD</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="spec-card-footer">
+              <span class="tuition-figure" data-b-kes="KES 180,000" data-b-usd="USD 1,800">
+                KES 180,000
+              </span>
+              <button type="button" class="action-btn b-open-detail">INSPECT →</button>
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article class="spec-card" data-b-level="certificate">
+            <div>
+              <div class="spec-card-header">
+                <span>LEVEL // CERTIFICATE</span>
+                <span>CODE: PSY-104</span>
+              </div>
+              <div class="spec-card-body">
+                <span class="residency-tag tag-none">RESIDENCY: NONE (100% ONLINE)</span>
+                <h2 class="spec-title">Certificate in Child &amp; Adolescent Development</h2>
+                <p style="font-size: 0.88rem; color: var(--text-secondary)">
+                  Developmental assessment and family systems interventions for remote students.
+                </p>
+                <table class="spec-table">
+                  <tbody>
+                    <tr>
+                      <td>DELIVERY</td>
+                      <td>100% Online Live + Video Host</td>
+                    </tr>
+                    <tr>
+                      <td>RESIDENCY</td>
+                      <td>None Required</td>
+                    </tr>
+                    <tr>
+                      <td>WEST COMP.</td>
+                      <td>$1,200 – $3,000 USD</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="spec-card-footer">
+              <span class="tuition-figure" data-b-kes="KES 45,000" data-b-usd="USD 750">
+                KES 45,000
+              </span>
+              <button type="button" class="action-btn b-open-detail">INSPECT →</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- DETAIL PANE -->
+      <section id="b-detail-pane" class="detail-pane" aria-labelledby="b-detail-title">
+        <button
+          type="button"
+          id="b-back-btn"
+          style="background: none; border: none; font-family: var(--font-mono); font-weight: 600; color: var(--accent-cobalt)"
+        >
+          ← RETURN TO CATALOG MATRIX
+        </button>
+
+        <div class="detail-matrix">
+          <div class="matrix-left">
+            <span class="residency-tag tag-req">DIPLOMA // 5-DAY PRACTICAL BLOCK REQUIRED</span>
+            <h1 id="b-detail-title" class="display-title">
+              Diploma in Clinical &amp; Applied Psychology
+            </h1>
+            <p class="hero-desc">
+              Full-spectrum clinical training combining weekly live Google Meet lectures with
+              short-lived signed video playbacks and a 5-day practical block in Nairobi or Embu.
+            </p>
+
+            <h2
+              style="font-family: var(--font-mono); font-size: 0.82rem; text-transform: uppercase; margin: 1.5rem 0 0.75rem"
+            >
+              Syllabus Specification
+            </h2>
+            <table class="spec-table">
+              <tbody>
+                <tr>
+                  <td>MOD_01</td>
+                  <td>Psychopathology &amp; Diagnostic Systems (Live + Video Playback)</td>
+                </tr>
+                <tr>
+                  <td>MOD_02</td>
+                  <td>Clinical Assessment &amp; Case Formulation</td>
+                </tr>
+                <tr>
+                  <td>MOD_03</td>
+                  <td>5-Day Practical Residency Block (Nairobi or Embu Campus)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <aside class="matrix-right" aria-label="Enrollment Specification">
+            <p class="kicker">TUITION &amp; DPO CHECKOUT</p>
+            <p
+              class="tuition-figure"
+              style="font-size: 2rem; margin: 0.4rem 0"
+              data-b-kes="KES 180,000"
+              data-b-usd="USD 1,800"
+            >
+              KES 180,000
+            </p>
+            <p style="font-size: 0.82rem; color: var(--text-secondary)">
+              Equivalent to 232,000 KES at international tier. Includes LMS per-user licence &amp;
+              secure video playback hosting.
+            </p>
+            <hr style="border: none; border-top: 1px solid var(--border-grid); margin: 1rem 0" />
+            <p style="font-size: 0.82rem">
+              <strong>5-Day Practical Block:</strong> $100 USD fee covers lunch &amp; teas in
+              Nairobi or Embu. Travel and lodging are the student&apos;s responsibility.
+            </p>
+            <button type="button" class="cta-locked" disabled aria-disabled="true">
+              ENROLLMENT LOCKED UNTIL PHASE 2 AUTH
+            </button>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const bCatalog = document.getElementById("b-catalog-pane");
+      const bDetail = document.getElementById("b-detail-pane");
+      const bCatBtn = document.getElementById("b-catalog-btn");
+      const bDetBtn = document.getElementById("b-detail-btn");
+      const bBackBtn = document.getElementById("b-back-btn");
+      const bKesBtn = document.getElementById("b-kes-btn");
+      const bUsdBtn = document.getElementById("b-usd-btn");
+
+      function toggleView(v) {
+        const isDetail = v === "detail";
+        bCatalog.classList.toggle("hidden", isDetail);
+        bDetail.classList.toggle("active", isDetail);
+        bCatBtn.setAttribute("aria-pressed", String(!isDetail));
+        bDetBtn.setAttribute("aria-pressed", String(isDetail));
+      }
+
+      bCatBtn.addEventListener("click", () => toggleView("catalog"));
+      bDetBtn.addEventListener("click", () => toggleView("detail"));
+      bBackBtn.addEventListener("click", () => toggleView("catalog"));
+      document.querySelectorAll(".b-open-detail").forEach((el) => {
+        el.addEventListener("click", () => toggleView("detail"));
+      });
+
+      function toggleCurrency(cur) {
+        const isKes = cur === "kes";
+        bKesBtn.setAttribute("aria-pressed", String(isKes));
+        bUsdBtn.setAttribute("aria-pressed", String(!isKes));
+        document.querySelectorAll("[data-b-kes]").forEach((el) => {
+          el.textContent = isKes ? el.getAttribute("data-b-kes") : el.getAttribute("data-b-usd");
+        });
+      }
+
+      bKesBtn.addEventListener("click", () => toggleCurrency("kes"));
+      bUsdBtn.addEventListener("click", () => toggleCurrency("usd"));
+
+      document.querySelectorAll("[data-b-filter]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const level = btn.getAttribute("data-b-filter");
+          document
+            .querySelectorAll("[data-b-filter]")
+            .forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+          document.querySelectorAll("[data-b-level]").forEach((card) => {
+            card.style.display =
+              level === "all" || card.getAttribute("data-b-level") === level ? "flex" : "none";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
