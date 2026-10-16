@@ -55,9 +55,9 @@
 
 ### Phase 4: Classroom, Secure Video & Live Lectures (`branch: p4-classroom`, tag: `v0.4-p4`)
 
-- [ ] **Task 4.1:** `backend/apps/classroom/models.py` — `Module`, `Lesson` (`video | reading | live | quiz`, `video_asset_id`), `LessonProgress` (`last_position_s`, `completed_at`), and `LiveSession` (`starts_at` UTC, protected `meet_url`, `recording_lesson`).
-- [ ] **Task 4.2:** `backend/apps/classroom/views.py` — Short-lived signed video playback token endpoint and time-windowed `meet_url` resolver restricted strictly to `ACTIVE` enrollments.
-- [ ] **Task 4.3:** `frontend/src/pages/ClassroomPage.tsx` — Video player with `last_position_s` resume, 90% auto-complete trigger, faint student email watermark overlay, and local-timezone live lecture schedule.
+- [x] **Task 4.1:** `backend/apps/classroom/models.py` — `Module`, `Lesson` (`video | reading | live | quiz`, `video_asset_id`), `LessonProgress` (`last_position_s`, `completed_at`), and `LiveSession` (`starts_at` UTC, protected `meet_url`, `recording_lesson`).
+- [x] **Task 4.2:** `backend/apps/classroom/views.py` — Short-lived signed video playback token endpoint and time-windowed `meet_url` resolver restricted strictly to `ACTIVE` enrollments.
+- [x] **Task 4.3:** `frontend/src/pages/ClassroomPage.tsx` — Video player with `last_position_s` resume, 90% auto-complete trigger, faint student email watermark overlay, and local-timezone live lecture schedule.
 
 ### Phase 5: Nairobi & Embu Residency Blocks (`branch: p5-residency`, tag: `v0.5-p5`)
 

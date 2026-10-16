@@ -4,6 +4,7 @@ import { Footer, Navbar } from "./components/ui";
 import { AuthProvider, ProtectedRoute, useAuth } from "./context/AuthContext";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
 import { CatalogPage } from "./pages/CatalogPage";
+import { ClassroomPage } from "./pages/ClassroomPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { MyLearningPage } from "./pages/MyLearningPage";
 import type { AudienceTier } from "./types/catalog";
@@ -40,6 +41,14 @@ function AppShell({
             element={
               <ProtectedRoute>
                 <MyLearningPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classroom/:slug"
+            element={
+              <ProtectedRoute>
+                <ClassroomPage />
               </ProtectedRoute>
             }
           />

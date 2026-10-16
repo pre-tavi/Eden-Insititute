@@ -291,7 +291,7 @@ export function MyLearningPage() {
                         <Button
                           size="sm"
                           onClick={() => {
-                            navigate(`/courses/${enrollment.course.slug}`);
+                            navigate(`/classroom/${enrollment.course.slug}`);
                           }}
                         >
                           Enter Classroom →

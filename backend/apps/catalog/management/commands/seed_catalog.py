@@ -1,17 +1,20 @@
 """
 Idempotent management command to seed Dr. Violet's real psychology programmes,
-local (KES) and international (USD) integer minor-unit prices, and intake cohorts.
+local (KES) and international (USD) integer minor-unit prices, intake cohorts,
+classroom modules, signed video lessons, and live Google Meet sessions.
 """
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from apps.catalog.models import Cohort, Course, Price
+from apps.classroom.models import Lesson, LiveSession, Module
 
 
 class Command(BaseCommand):
-    help = "Seed Dr. Violet's psychology Certificate and Diploma catalog programmes."
+    help = "Seed Dr. Violet's psychology Certificate and Diploma programmes and classroom lessons."
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
@@ -31,8 +34,8 @@ class Command(BaseCommand):
                     "Module 3: Trauma-Informed Care, Crisis Intervention & Case Formulation (Weeks 7-10)\n"
                     "Module 4: Supervised Practicum & Optional 5-Day Nairobi/Embu Residency Block (Weeks 11-12)"
                 ),
-                "kes_minor": 3_500_000,  # KES 35,000.00
-                "usd_minor": 55_000,     # USD 550.00
+                "kes_minor": 3_500_000,
+                "usd_minor": 55_000,
                 "cohort_name": "January 2027 Intake",
                 "starts_on": date(2027, 1, 15),
                 "capacity": 30,
@@ -52,8 +55,8 @@ class Command(BaseCommand):
                     "Module 3: Group Therapy Leadership, Family Systems & Community Mental Health (Weeks 13-18)\n"
                     "Module 4: Mandatory 5-Day Practical Residency Block in Nairobi or Embu & Capstone (Weeks 19-24)"
                 ),
-                "kes_minor": 18_000_000,  # KES 180,000.00
-                "usd_minor": 180_000,     # USD 1,800.00 (~232,000 KES international tier)
+                "kes_minor": 18_000_000,
+                "usd_minor": 180_000,
                 "cohort_name": "February 2027 Intake",
                 "starts_on": date(2027, 2, 1),
                 "capacity": 25,
@@ -73,13 +76,15 @@ class Command(BaseCommand):
                     "Module 3: Parent Consultation, Safeguarding & Cross-Cultural Ethics (Weeks 7-10)\n"
                     "Module 4: Remote Clinical Case Supervision via Live Google Meet Seminars (Weeks 11-12)"
                 ),
-                "kes_minor": 4_500_000,  # KES 45,000.00
-                "usd_minor": 75_000,     # USD 750.00
+                "kes_minor": 4_500_000,
+                "usd_minor": 75_000,
                 "cohort_name": "March 2027 Intake",
                 "starts_on": date(2027, 3, 1),
                 "capacity": 30,
             },
         ]
+
+        now_utc = timezone.now()
 
         for item in programmes:
             course, _ = Course.objects.update_or_create(
@@ -109,7 +114,7 @@ class Command(BaseCommand):
                     "amount_minor": item["usd_minor"],
                 },
             )
-            Cohort.objects.update_or_create(
+            cohort, _ = Cohort.objects.update_or_create(
                 course=course,
                 name=item["cohort_name"],
                 defaults={
@@ -119,8 +124,59 @@ class Command(BaseCommand):
                 },
             )
 
+            mod1, _ = Module.objects.update_or_create(
+                course=course,
+                order=1,
+                defaults={
+                    "title": "Foundations of Clinical Ethics & Intake Formulation",
+                    "description": "Core ethical principles, confidentiality, and clinical intake.",
+                },
+            )
+            lesson1, _ = Lesson.objects.update_or_create(
+                module=mod1,
+                order=1,
+                defaults={
+                    "title": "Therapeutic Boundaries & Informed Consent",
+                    "kind": Lesson.Kind.VIDEO,
+                    "duration_seconds": 1800,
+                    "video_asset_id": f"asset_{course.slug}_mod1_les1",
+                    "reading_body": (
+                        "1. Establish clear informed consent prior to clinical intake.\n"
+                        "2. Document confidentiality limits and safeguarding protocols.\n"
+                        "3. Prepare case formulation notes for Thursday's live seminar."
+                    ),
+                    "is_published": True,
+                },
+            )
+            Lesson.objects.update_or_create(
+                module=mod1,
+                order=2,
+                defaults={
+                    "title": "Intake Interviewing & Case Formulation Protocol",
+                    "kind": Lesson.Kind.READING,
+                    "duration_seconds": 900,
+                    "video_asset_id": "",
+                    "reading_body": (
+                        "Structured clinical intake guide covering presenting problem, "
+                        "psychosocial history, and mental status examination."
+                    ),
+                    "is_published": True,
+                },
+            )
+
+            LiveSession.objects.update_or_create(
+                cohort=cohort,
+                title="Live Clinical Supervision & Case Seminar #1",
+                defaults={
+                    "starts_at": now_utc + timedelta(minutes=10),
+                    "duration_minutes": 90,
+                    "meet_url": "https://meet.google.com/eden-psy-live",
+                    "recording_lesson": lesson1,
+                },
+            )
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully seeded {len(programmes)} published psychology programmes."
+                f"Successfully seeded {len(programmes)} published programmes with classroom modules & live sessions."
             )
         )
