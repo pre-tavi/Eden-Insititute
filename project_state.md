@@ -49,9 +49,9 @@
 
 ### Phase 3: DPO Pay Integration (`branch: p3-payments`, tag: `v0.3-p3`)
 
-- [ ] **Task 3.1:** `backend/apps/payments/models.py` & `services.py` — `Payment` model (`UNIQUE(provider, provider_ref)`, `amount_minor`, `currency`, `raw_log`) and single `activate_enrollment()` state transition function.
-- [ ] **Task 3.2:** `backend/apps/payments/views.py` & `admin.py` — Server-computed audience price lookup, DPO hosted checkout redirect, idempotent webhook/return verification, and audited staff "Mark Paid Manually" action.
-- [ ] **Task 3.3:** `backend/tests/test_payments.py` — Duplicate webhook idempotency test and tampered amount rejection test.
+- [x] **Task 3.1:** `backend/apps/payments/models.py` & `services.py` — `Payment` model (`UNIQUE(provider, provider_ref)`, `amount_minor`, `currency`, `raw_log`) and single `activate_enrollment()` state transition function.
+- [x] **Task 3.2:** `backend/apps/payments/views.py` & `admin.py` — Server-computed audience price lookup, DPO hosted checkout redirect, idempotent webhook/return verification, and audited staff "Mark Paid Manually" action.
+- [x] **Task 3.3:** `backend/tests/test_payments.py` — Duplicate webhook idempotency test and tampered amount rejection test.
 
 ### Phase 4: Classroom, Secure Video & Live Lectures (`branch: p4-classroom`, tag: `v0.4-p4`)
 

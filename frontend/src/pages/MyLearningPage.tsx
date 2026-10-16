@@ -10,8 +10,21 @@ import {
   ProgressBar,
 } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
-import type { EnrollmentItem } from "../types/auth";
+import {
+  ensureCsrfToken,
+  extractApiErrorMessage,
+  type EnrollmentItem,
+} from "../types/auth";
 import { formatMinorCurrency, type PaginatedResponse } from "../types/catalog";
+
+interface PaymentInitiateResponse {
+  id: string;
+  provider_ref: string;
+  checkout_url: string;
+  amount_minor: number;
+  currency: "KES" | "USD";
+  status: string;
+}
 
 export function MyLearningPage() {
   const { user } = useAuth();
@@ -20,6 +33,10 @@ export function MyLearningPage() {
   const [enrollments, setEnrollments] = useState<EnrollmentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [paymentFeedback, setPaymentFeedback] = useState<string | null>(null);
+  const [payingEnrollmentId, setPayingEnrollmentId] = useState<string | null>(
+    null
+  );
 
   const fetchEnrollments = useCallback(async () => {
     setIsLoading(true);
@@ -55,6 +72,71 @@ export function MyLearningPage() {
     void fetchEnrollments();
   }, [fetchEnrollments]);
 
+  const handlePayViaDpo = async (enrollmentId: string) => {
+    setPayingEnrollmentId(enrollmentId);
+    setPaymentFeedback(null);
+    setErrorMessage(null);
+
+    try {
+      const csrfToken = await ensureCsrfToken();
+      const initRes = await fetch("/api/payments/initiate/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ enrollment_id: enrollmentId }),
+      });
+
+      const initData: unknown = await initRes.json().catch(() => ({}));
+      if (!initRes.ok) {
+        throw new Error(
+          extractApiErrorMessage(initData, "Unable to initiate DPO payment.")
+        );
+      }
+
+      const payment = initData as PaymentInitiateResponse;
+
+      if (payment.provider_ref.startsWith("DPO-SANDBOX-")) {
+        const verifyRes = await fetch("/api/payments/verify-return/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ provider_ref: payment.provider_ref }),
+        });
+
+        const verifyData: unknown = await verifyRes.json().catch(() => ({}));
+        if (!verifyRes.ok) {
+          throw new Error(
+            extractApiErrorMessage(
+              verifyData,
+              "DPO sandbox verification failed."
+            )
+          );
+        }
+
+        setPaymentFeedback(
+          `DPO Pay transaction ${payment.provider_ref} verified server-to-server. Your enrollment is now ACTIVE.`
+        );
+        await fetchEnrollments();
+      } else if (payment.checkout_url) {
+        window.location.assign(payment.checkout_url);
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Payment initiation failed."
+      );
+    } finally {
+      setPayingEnrollmentId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <header className="border-b border-[var(--color-border-hairline)] pb-6 flex flex-wrap items-end justify-between gap-4">
@@ -89,6 +171,15 @@ export function MyLearningPage() {
         </Link>
       </header>
 
+      {paymentFeedback && (
+        <div
+          role="status"
+          className="mt-6 rounded-[var(--radius-sm)] border border-[var(--color-badge-certificate-border)] bg-[var(--color-status-success-bg)] p-4 text-xs font-medium text-[var(--color-status-success-text)]"
+        >
+          {paymentFeedback}
+        </div>
+      )}
+
       <div className="mt-8">
         {isLoading && (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -111,7 +202,9 @@ export function MyLearningPage() {
             title="You have no active or pending cohort enrollments yet"
             description="Explore Dr. Violet's Certificate and Diploma programmes in Psychology and select an open intake cohort to enroll."
             actionLabel="Explore Academic Catalog"
-            onAction={() => navigate("/")}
+            onAction={() => {
+              navigate("/");
+            }}
           />
         )}
 
@@ -122,6 +215,11 @@ export function MyLearningPage() {
               const isActive =
                 enrollment.status === "active" ||
                 enrollment.status === "completed";
+              const progressValue =
+                enrollment.status === "completed" ? 100 : isActive ? 10 : 0;
+              const progressLabel = isPending
+                ? "Awaiting DPO Tuition Verification"
+                : "Lesson & Live Lecture Progress";
 
               return (
                 <Card
@@ -158,18 +256,8 @@ export function MyLearningPage() {
 
                       <div className="mt-4">
                         <ProgressBar
-                          value={
-                            enrollment.status === "completed"
-                              ? 100
-                              : isActive
-                              ? 10
-                              : 0
-                          }
-                          label={
-                            isPending
-                              ? "Awaiting DPO Tuition Verification"
-                              : "Lesson & Live Lecture Progress"
-                          }
+                          value={progressValue}
+                          label={progressLabel}
                         />
                       </div>
                     </div>
@@ -190,15 +278,21 @@ export function MyLearningPage() {
                       </div>
 
                       {isPending ? (
-                        <Button size="sm" disabled>
-                          Complete DPO Payment (Phase 3)
+                        <Button
+                          size="sm"
+                          isLoading={payingEnrollmentId === enrollment.id}
+                          onClick={() => {
+                            void handlePayViaDpo(enrollment.id);
+                          }}
+                        >
+                          Pay via DPO Link →
                         </Button>
                       ) : (
                         <Button
                           size="sm"
-                          onClick={() =>
-                            navigate(`/courses/${enrollment.course.slug}`)
-                          }
+                          onClick={() => {
+                            navigate(`/courses/${enrollment.course.slug}`);
+                          }}
                         >
                           Enter Classroom →
                         </Button>
