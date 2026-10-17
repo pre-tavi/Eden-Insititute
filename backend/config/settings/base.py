@@ -6,9 +6,6 @@ from pathlib import Path
 
 import environ
 
-# Build paths inside the project:
-# BASE_DIR -> /home/preciousgatavi/Desktop/edenlms/backend
-# REPO_DIR -> /home/preciousgatavi/Desktop/edenlms
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_DIR = BASE_DIR.parent
 
@@ -18,9 +15,10 @@ env = environ.Env(
     CSRF_TRUSTED_ORIGINS=(list, ["http://localhost:5173", "http://127.0.0.1:5173"]),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:5173", "http://127.0.0.1:5173"]),
     VIDEO_TOKEN_TTL_SECONDS=(int, 3600),
+    DJANGO_ADMIN_URL=(str, "admin/"),
+    ENFORCE_STAFF_2FA=(bool, False),
 )
 
-# Load .env file from repository root if present
 env_file = REPO_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(str(env_file))
@@ -29,7 +27,12 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")
 
-# Application definition
+DJANGO_ADMIN_URL = env("DJANGO_ADMIN_URL").lstrip("/")
+if not DJANGO_ADMIN_URL.endswith("/"):
+    DJANGO_ADMIN_URL = f"{DJANGO_ADMIN_URL}/"
+
+ENFORCE_STAFF_2FA = env.bool("ENFORCE_STAFF_2FA")
+
 DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -44,6 +47,9 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "axes",
     "csp",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
 ]
 
 LOCAL_APPS = [
@@ -64,6 +70,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
@@ -90,7 +97,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Password hashing — Argon2id first per Pre-Deployment Security Checklist #10
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -119,7 +125,6 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# Internationalization & UTC Timezone enforcement
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -132,7 +137,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Django REST Framework — Secure server-side defaults (Session + CSRF, no JWT in localStorage)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
@@ -155,24 +159,20 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-# Cookie & CSRF Security (Pre-Deployment Checklist #9 & #26)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days
-CSRF_COOKIE_HTTPONLY = False  # React reads csrftoken cookie to send X-CSRFToken header
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
-# CORS Configuration
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
 
-# Security Headers (Pre-Deployment Checklist #18)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# Content Security Policy (django-csp 3.8)
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_SCRIPT_SRC = ("'self'", "https://challenges.cloudflare.com")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
@@ -183,17 +183,16 @@ CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_OBJECT_SRC = ("'none'",)
 CSP_BASE_URI = ("'self'",)
 
-# django-axes Login Brute-Force Protection (Pre-Deployment Checklist #11)
 AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1  # Lock out for 1 hour after 5 failed attempts
+AXES_COOLOFF_TIME = 1
 AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
 AXES_RESET_ON_SUCCESS = True
 
-# External Integrations (Read strictly from environment variables)
 DPO_COMPANY_TOKEN = env("DPO_COMPANY_TOKEN", default="")
 DPO_SERVICE_TYPE = env("DPO_SERVICE_TYPE", default="")
 DPO_API_URL = env("DPO_API_URL", default="https://secure.3gdirectpay.com/API/v6/")
 VIDEO_SIGNING_SECRET = env("VIDEO_SIGNING_SECRET", default="")
 VIDEO_TOKEN_TTL_SECONDS = env.int("VIDEO_TOKEN_TTL_SECONDS")
 TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
+
 AUTH_USER_MODEL = "accounts.User"

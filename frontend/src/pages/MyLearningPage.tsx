@@ -26,42 +26,102 @@ interface PaymentInitiateResponse {
   status: string;
 }
 
+interface ResidencyBlockItem {
+  id: string;
+  course: string;
+  location: "nairobi" | "embu";
+  location_display: string;
+  title: string;
+  starts_on: string;
+  ends_on: string;
+  capacity: number;
+  seats_remaining: number;
+  fee_minor: number;
+  fee_major: string;
+  currency: "KES" | "USD";
+  catering_notice: string;
+  is_open: boolean;
+}
+
+interface ResidencyRegistrationItem {
+  id: string;
+  enrollment: string;
+  block: ResidencyBlockItem;
+  seat_number: number;
+  status: "pending_payment" | "confirmed" | "cancelled";
+  status_display: string;
+  payment: PaymentInitiateResponse | null;
+  dietary_notes: string;
+  catering_notice: string;
+}
+
 export function MyLearningPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [enrollments, setEnrollments] = useState<EnrollmentItem[]>([]);
+  const [residencyBlocks, setResidencyBlocks] = useState<ResidencyBlockItem[]>(
+    []
+  );
+  const [residencyRegistrations, setResidencyRegistrations] = useState<
+    ResidencyRegistrationItem[]
+  >([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentFeedback, setPaymentFeedback] = useState<string | null>(null);
   const [payingEnrollmentId, setPayingEnrollmentId] = useState<string | null>(
     null
   );
+  const [bookingBlockId, setBookingBlockId] = useState<string | null>(null);
 
-  const fetchEnrollments = useCallback(async () => {
+  const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/enrollments/", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        credentials: "same-origin",
-      });
+      const [enrollRes, blocksRes, regsRes] = await Promise.all([
+        fetch("/api/enrollments/", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+        }),
+        fetch("/api/residency/blocks/", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+        }),
+        fetch("/api/residency/registrations/", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+        }),
+      ]);
 
-      if (!response.ok) {
+      if (!enrollRes.ok) {
         throw new Error(
-          `Failed to load student enrollments (HTTP ${response.status})`
+          `Failed to load student enrollments (HTTP ${enrollRes.status})`
         );
       }
 
-      const data = (await response.json()) as PaginatedResponse<EnrollmentItem>;
-      setEnrollments(data.results ?? []);
+      const enrollData =
+        (await enrollRes.json()) as PaginatedResponse<EnrollmentItem>;
+      setEnrollments(enrollData.results ?? []);
+
+      if (blocksRes.ok) {
+        const blocksData =
+          (await blocksRes.json()) as PaginatedResponse<ResidencyBlockItem>;
+        setResidencyBlocks(blocksData.results ?? []);
+      }
+
+      if (regsRes.ok) {
+        const regsData = (await regsRes.json()) as ResidencyRegistrationItem[];
+        setResidencyRegistrations(Array.isArray(regsData) ? regsData : []);
+      }
     } catch (err) {
       setErrorMessage(
         err instanceof Error
           ? err.message
-          : "Unable to load your enrollments."
+          : "Unable to load your learning dashboard."
       );
     } finally {
       setIsLoading(false);
@@ -69,8 +129,8 @@ export function MyLearningPage() {
   }, []);
 
   useEffect(() => {
-    void fetchEnrollments();
-  }, [fetchEnrollments]);
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handlePayViaDpo = async (enrollmentId: string) => {
     setPayingEnrollmentId(enrollmentId);
@@ -124,7 +184,7 @@ export function MyLearningPage() {
         setPaymentFeedback(
           `DPO Pay transaction ${payment.provider_ref} verified server-to-server. Your enrollment is now ACTIVE.`
         );
-        await fetchEnrollments();
+        await fetchDashboardData();
       } else if (payment.checkout_url) {
         window.location.assign(payment.checkout_url);
       }
@@ -134,6 +194,70 @@ export function MyLearningPage() {
       );
     } finally {
       setPayingEnrollmentId(null);
+    }
+  };
+
+  const handleBookResidencyBlock = async (blockId: string) => {
+    setBookingBlockId(blockId);
+    setPaymentFeedback(null);
+    setErrorMessage(null);
+
+    try {
+      const csrfToken = await ensureCsrfToken();
+      const bookRes = await fetch("/api/residency/registrations/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          block_id: blockId,
+          dietary_notes: "Standard lunch and tea",
+        }),
+      });
+
+      const bookData: unknown = await bookRes.json().catch(() => ({}));
+      if (!bookRes.ok) {
+        throw new Error(
+          extractApiErrorMessage(
+            bookData,
+            "Unable to book 5-day practical residency block."
+          )
+        );
+      }
+
+      const reg = bookData as ResidencyRegistrationItem;
+      const providerRef = reg.payment?.provider_ref ?? "";
+
+      if (providerRef.startsWith("DPO-SANDBOX-")) {
+        const verifyRes = await fetch("/api/payments/verify-return/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ provider_ref: providerRef }),
+        });
+
+        if (verifyRes.ok) {
+          setPaymentFeedback(
+            `Confirmed Seat #${reg.seat_number} for ${reg.block.location_display} (${reg.block.starts_on} to ${reg.block.ends_on}). $100 USD lunch & tea fee verified.`
+          );
+        }
+        await fetchDashboardData();
+      } else if (reg.payment?.checkout_url) {
+        window.location.assign(reg.payment.checkout_url);
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Residency booking failed."
+      );
+    } finally {
+      setBookingBlockId(null);
     }
   };
 
@@ -192,7 +316,7 @@ export function MyLearningPage() {
           <ErrorState
             message={errorMessage}
             onRetry={() => {
-              void fetchEnrollments();
+              void fetchDashboardData();
             }}
           />
         )}
@@ -220,6 +344,14 @@ export function MyLearningPage() {
               const progressLabel = isPending
                 ? "Awaiting DPO Tuition Verification"
                 : "Lesson & Live Lecture Progress";
+
+              const courseBlocks = residencyBlocks.filter(
+                (b) => b.course === enrollment.course.id
+              );
+              const existingReg = residencyRegistrations.find(
+                (r) =>
+                  r.enrollment === enrollment.id && r.status !== "cancelled"
+              );
 
               return (
                 <Card
@@ -260,6 +392,49 @@ export function MyLearningPage() {
                           label={progressLabel}
                         />
                       </div>
+
+                      {/* Phase 5: 5-Day Nairobi & Embu Practical Residency Booking Section */}
+                      {isActive &&
+                        enrollment.course.residency !== "none" && (
+                          <div className="mt-4 rounded-[var(--radius-sm)] border border-[var(--color-accent-terracotta-border)] bg-[var(--color-accent-terracotta-bg)] p-3.5 text-xs space-y-2">
+                            <p className="font-clinical-mono font-semibold uppercase text-[var(--color-accent-terracotta)]">
+                              5-Day Practical Block (Nairobi / Embu) · $100 USD
+                            </p>
+                            <p className="text-[var(--color-text-secondary)]">
+                              Fee covers daily lunch and teas. Travel and lodging are the
+                              student&apos;s responsibility.
+                            </p>
+
+                            {existingReg ? (
+                              <p className="font-clinical-mono font-semibold text-[var(--color-status-success-text)]">
+                                ✓ Booked: {existingReg.block.location_display} (
+                                {existingReg.block.starts_on} to{" "}
+                                {existingReg.block.ends_on}) · Seat #
+                                {existingReg.seat_number} [
+                                {existingReg.status.toUpperCase()}]
+                              </p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {courseBlocks.map((block) => (
+                                  <Button
+                                    key={block.id}
+                                    size="sm"
+                                    variant="secondary"
+                                    disabled={block.seats_remaining <= 0}
+                                    isLoading={bookingBlockId === block.id}
+                                    onClick={() => {
+                                      void handleBookResidencyBlock(block.id);
+                                    }}
+                                  >
+                                    Book {block.location_display} (
+                                    {block.starts_on} · {block.seats_remaining}{" "}
+                                    seats left)
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </div>
 
                     <div className="border-t border-[var(--color-border-hairline)] pt-4 flex flex-wrap items-center justify-between gap-4">

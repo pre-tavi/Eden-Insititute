@@ -1,7 +1,8 @@
 """
 Idempotent management command to seed Dr. Violet's real psychology programmes,
 local (KES) and international (USD) integer minor-unit prices, intake cohorts,
-classroom modules, signed video lessons, and live Google Meet sessions.
+classroom modules, signed video lessons, live Google Meet sessions, and 5-day
+Nairobi & Embu practical residency blocks.
 """
 from datetime import date, timedelta
 
@@ -11,10 +12,11 @@ from django.utils import timezone
 
 from apps.catalog.models import Cohort, Course, Price
 from apps.classroom.models import Lesson, LiveSession, Module
+from apps.residency.models import ResidencyBlock
 
 
 class Command(BaseCommand):
-    help = "Seed Dr. Violet's psychology Certificate and Diploma programmes and classroom lessons."
+    help = "Seed Dr. Violet's psychology Certificate and Diploma programmes, classroom lessons, and residency blocks."
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
@@ -175,8 +177,36 @@ class Command(BaseCommand):
                 },
             )
 
+            if course.residency in (Course.Residency.OPTIONAL, Course.Residency.REQUIRED):
+                ResidencyBlock.objects.update_or_create(
+                    course=course,
+                    location=ResidencyBlock.Location.NAIROBI,
+                    starts_on=date(2027, 4, 12),
+                    defaults={
+                        "title": "Nairobi 5-Day Practical Clinical Block",
+                        "ends_on": date(2027, 4, 16),
+                        "capacity": 20,
+                        "fee_minor": 10_000,
+                        "currency": Price.Currency.USD,
+                        "is_open": True,
+                    },
+                )
+                ResidencyBlock.objects.update_or_create(
+                    course=course,
+                    location=ResidencyBlock.Location.EMBU,
+                    starts_on=date(2027, 4, 19),
+                    defaults={
+                        "title": "Embu 5-Day Practical Clinical Block",
+                        "ends_on": date(2027, 4, 23),
+                        "capacity": 20,
+                        "fee_minor": 10_000,
+                        "currency": Price.Currency.USD,
+                        "is_open": True,
+                    },
+                )
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully seeded {len(programmes)} published programmes with classroom modules & live sessions."
+                f"Successfully seeded {len(programmes)} published programmes, classroom modules, and Nairobi/Embu residency blocks."
             )
         )

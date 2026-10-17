@@ -66,8 +66,8 @@
 
 ### Phase 6 & Phase 7: Instructor Back-Office & Pre-Deploy Hardening (`branch: p6-admin`, `branch: p7-hardening`)
 
-- [ ] **Task 6.1:** `backend/apps/*/admin.py` — Custom Django Admin filters, inline student progress percentages, CSV exports, and `django-otp` 2FA enforcement for staff accounts.
-- [ ] **Task 7.1:** `docs/RUNBOOK.md` & `make predeploy` — Full 29-point security verification, backup restore test, and staging deployment.
+- [x] **Task 6.1:** `backend/apps/*/admin.py` — Custom Django Admin filters, inline student progress percentages, CSV exports, and `django-otp` 2FA enforcement for staff accounts.
+- [x] **Task 7.1:** `docs/RUNBOOK.md` & `make predeploy` — Full 29-point security verification, backup restore test, and staging deployment.
 
 ---
 
