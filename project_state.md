@@ -61,8 +61,8 @@
 
 ### Phase 5: Nairobi & Embu Residency Blocks (`branch: p5-residency`, tag: `v0.5-p5`)
 
-- [ ] **Task 5.1:** `backend/apps/residency/models.py` & `views.py` — `ResidencyBlock` (`nairobi | embu`, 5 days, `capacity`, `fee_minor=10000` USD) and `ResidencyRegistration` with `select_for_update()` transactional seat locking and CSV catering export.
-- [ ] **Task 5.2:** `backend/tests/test_residency_concurrency.py` — Concurrent booking test verifying the final seat cannot be double-booked.
+- [x] **Task 5.1:** `backend/apps/residency/models.py` & `views.py` — `ResidencyBlock` (`nairobi | embu`, 5 days, `capacity`, `fee_minor=10000` USD) and `ResidencyRegistration` with `select_for_update()` transactional seat locking and CSV catering export.
+- [x] **Task 5.2:** `backend/tests/test_residency_concurrency.py` — Concurrent booking test verifying the final seat cannot be double-booked.
 
 ### Phase 6 & Phase 7: Instructor Back-Office & Pre-Deploy Hardening (`branch: p6-admin`, `branch: p7-hardening`)
 

@@ -1,10 +1,11 @@
 """
 DPO Pay Integration & Server-to-Server Verification Service for Dr. Violet's LMS (EdenLMS).
-Complies with Blueprint Phase 3 and Pre-Deployment Security Checklist #22:
+Complies with Blueprint Phase 3 & Phase 5 and Pre-Deployment Security Checklist #22:
 - Never trusts a price or status sent by the browser.
 - Uses defusedxml to parse DPO API v6 XML responses safely.
 - Verifies transactions server-to-server, validates exact integer minor-unit amount and currency,
-  enforces idempotency, commits raw provider audit logs even on failure/tamper, and calls activate_enrollment().
+  enforces idempotency, commits raw provider audit logs even on failure/tamper, activates course
+  enrollments, and confirms linked 5-day ResidencyRegistrations ($100 USD).
 """
 import urllib.error
 import urllib.request
@@ -335,6 +336,7 @@ def verify_and_activate_dpo_payment(
     Idempotent server-to-server verification handler for both browser return and DPO webhook.
     Uses an explicit inner atomic block so FAILED and TAMPERED status transitions and raw_log
     audit entries are durably committed to the database before raising ValidationError.
+    Also confirms any linked 5-day ResidencyRegistration when the $100 USD residency payment is verified.
     """
     error_to_raise: ValidationError | None = None
 
@@ -408,7 +410,13 @@ def verify_and_activate_dpo_payment(
             payment.save(
                 update_fields=["status", "verified_at", "raw_log", "updated_at"]
             )
-            if payment.enrollment is not None:
+
+            # Confirm linked 5-day ResidencyRegistration if this payment is for a residency block
+            residency_reg = getattr(payment, "residency_registration", None)
+            if residency_reg is not None:
+                residency_reg.status = "confirmed"
+                residency_reg.save(update_fields=["status", "updated_at"])
+            elif payment.enrollment is not None:
                 activate_enrollment(
                     payment.enrollment,
                     source=f"dpo_verified:{payment.provider_ref}",
