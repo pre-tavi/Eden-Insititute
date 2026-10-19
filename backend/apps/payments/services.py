@@ -4,9 +4,8 @@ Complies with Blueprint Phase 3 & Phase 5 and Pre-Deployment Security Checklist 
 - Never trusts a price or status sent by the browser.
 - Uses defusedxml to parse DPO API v6 XML responses safely.
 - Strictly disables DPO-SANDBOX-* fallbacks in production (`config.settings.prod` or `ALLOW_DEV_SANDBOX=False`).
-- Verifies transactions server-to-server, validates exact integer minor-unit amount and currency,
-  enforces idempotency, commits raw provider audit logs even on failure/tamper, activates course
-  enrollments, and confirms linked 5-day ResidencyRegistrations ($100 USD).
+- Locks only the Payment table row during `select_for_update()` so PostgreSQL never applies
+  `FOR UPDATE` to the nullable side of a LEFT OUTER JOIN.
 """
 import os
 import urllib.error
@@ -371,21 +370,17 @@ def verify_and_activate_dpo_payment(
 ) -> Payment:
     """
     Idempotent server-to-server verification handler for both browser return and DPO webhook.
-    Uses an explicit inner atomic block so FAILED and TAMPERED status transitions and raw_log
-    audit entries are durably committed to the database before raising ValidationError.
-    Also confirms any linked 5-day ResidencyRegistration when the $100 USD residency payment is verified.
+    Note: `select_for_update()` is executed directly on `Payment` without `select_related("enrollment")`
+    because `enrollment` is a nullable ForeignKey and PostgreSQL forbids `FOR UPDATE` on the
+    nullable side of a LEFT OUTER JOIN.
     """
     error_to_raise: ValidationError | None = None
 
     with transaction.atomic():
         try:
-            payment = (
-                Payment.objects.select_for_update()
-                .select_related("enrollment")
-                .get(
-                    provider=Payment.Provider.DPO,
-                    provider_ref=provider_ref,
-                )
+            payment = Payment.objects.select_for_update().get(
+                provider=Payment.Provider.DPO,
+                provider_ref=provider_ref,
             )
         except Payment.DoesNotExist as exc:
             raise ValidationError(
@@ -452,7 +447,7 @@ def verify_and_activate_dpo_payment(
             if residency_reg is not None:
                 residency_reg.status = "confirmed"
                 residency_reg.save(update_fields=["status", "updated_at"])
-            elif payment.enrollment is not None:
+            elif payment.enrollment_id is not None:
                 activate_enrollment(
                     payment.enrollment,
                     source=f"dpo_verified:{payment.provider_ref}",

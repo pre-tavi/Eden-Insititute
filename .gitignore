@@ -61,3 +61,4 @@ coverage/
 venv/
 __pycache__/
 *.py[cod]
+.neon

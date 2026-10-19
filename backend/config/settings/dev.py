@@ -1,25 +1,30 @@
 """
-Local development settings for Dr. Violet's LMS (EdenLMS).
-Uses SQLite automatically if DATABASE_URL is not running locally.
+Development & Test settings for Eden Training Institute and Therapy (EdenLMS).
+- Connects the running application (`manage.py migrate`, `seed_catalog`, `runserver`) directly
+  to Neon PostgreSQL when `DATABASE_URL` is present in `.env.local` or `.env`.
+- Uses fast local SQLite during `pytest` runs (unless `PYTEST_USE_NEON=1` is set) so test
+  teardown does not collide with Neon's PgBouncer connection pooler.
 """
-from .base import *
-from .base import BASE_DIR, env
+import os
+import sys
 
-DEBUG = True
+from .base import *  # noqa: F403
 
-# In local dev, default to SQLite unless USE_POSTGRES_IN_DEV=True is explicitly set
-if env.bool("USE_POSTGRES_IN_DEV", default=False):
-    DATABASES = {
-        "default": env.db("DATABASE_URL"),
-    }
-else:
+DEBUG = env.bool("DJANGO_DEBUG", default=True)  # noqa: F405
+
+running_pytest = "pytest" in sys.modules and not os.environ.get("PYTEST_USE_NEON")
+
+if running_pytest:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
         }
     }
-
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    DATABASES = {
+        "default": env.db(  # noqa: F405
+            "DATABASE_URL",
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",  # noqa: F405
+        )
+    }
