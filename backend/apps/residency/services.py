@@ -3,13 +3,17 @@ Transactional Residency Booking, DPO Fee Initiation, and Course Completion Gate 
 Complies with Blueprint Phase 5:
 - Locks ResidencyBlock with `select_for_update()` and assigns a unique `seat_number` (1..capacity)
   inside `transaction.atomic()` so concurrent requests for the last seat never overbook.
+- Retries transient database lock contention (`OperationalError`) with jittered backoff so
+  concurrent bookings resolve deterministically on both PostgreSQL and SQLite shared-cache.
 - Creates a USD 100 (`amount_minor = 10000`) DPO Payment through the Phase 3 payment flow.
 - Enforces `Course.residency == 'required'` before allowing course completion.
 """
+import random
+import time
 import uuid
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.utils import timezone
 
 from apps.catalog.models import Course
@@ -19,6 +23,8 @@ from apps.payments.models import Payment
 from apps.payments.services import request_dpo_trans_token
 
 from .models import ResidencyBlock, ResidencyRegistration
+
+MAX_LOCK_RETRIES = 8
 
 
 def book_residency_block(
@@ -32,109 +38,138 @@ def book_residency_block(
     """
     Atomically reserve a seat in a 5-day Nairobi or Embu ResidencyBlock and initiate its
     $100 USD DPO Payment.
-    Guaranteed against overbooking under concurrent requests via `select_for_update()` AND
-    the database-level `unique_active_block_seat_number` constraint.
+    Guaranteed against overbooking under concurrent requests via `select_for_update()`,
+    transient lock retry, and the database-level `unique_active_block_seat_number` constraint.
     """
-    try:
-        with transaction.atomic():
-            locked_block = (
-                ResidencyBlock.objects.select_for_update()
-                .select_related("course")
-                .get(pk=block_id)
-            )
-
-            if not locked_block.is_open:
-                raise ValidationError("This residency block is closed for registration.")
-
-            if locked_block.course.residency == Course.Residency.NONE:
-                raise ValidationError("This course is 100% online and does not include a residency block.")
-
-            enrollment = (
-                Enrollment.objects.for_user(user)
-                .select_for_update()
-                .filter(
-                    cohort__course=locked_block.course,
-                    status__in=[Enrollment.Status.ACTIVE, Enrollment.Status.COMPLETED],
-                )
-                .first()
-            )
-            if enrollment is None:
-                raise ValidationError(
-                    "An active, paid course enrollment is required before booking a residency block."
+    for attempt in range(MAX_LOCK_RETRIES):
+        try:
+            with transaction.atomic():
+                locked_block = (
+                    ResidencyBlock.objects.select_for_update()
+                    .select_related("course")
+                    .get(pk=block_id)
                 )
 
-            existing = ResidencyRegistration.objects.filter(
-                enrollment=enrollment,
-                block=locked_block,
-            ).first()
-            if existing is not None and existing.status != ResidencyRegistration.Status.CANCELLED:
-                raise ValidationError("You are already registered for this residency block.")
+                if not locked_block.is_open:
+                    raise ValidationError(
+                        "This residency block is closed for registration."
+                    )
 
-            occupied_seats = set(
-                ResidencyRegistration.objects.select_for_update()
-                .filter(
+                if locked_block.course.residency == Course.Residency.NONE:
+                    raise ValidationError(
+                        "This course is 100% online and does not include a residency block."
+                    )
+
+                enrollment = (
+                    Enrollment.objects.for_user(user)
+                    .select_for_update()
+                    .filter(
+                        cohort__course=locked_block.course,
+                        status__in=[
+                            Enrollment.Status.ACTIVE,
+                            Enrollment.Status.COMPLETED,
+                        ],
+                    )
+                    .first()
+                )
+                if enrollment is None:
+                    raise ValidationError(
+                        "An active, paid course enrollment is required before booking a residency block."
+                    )
+
+                existing = ResidencyRegistration.objects.filter(
+                    enrollment=enrollment,
                     block=locked_block,
-                    status__in=[
-                        ResidencyRegistration.Status.PENDING_PAYMENT,
-                        ResidencyRegistration.Status.CONFIRMED,
-                    ],
+                ).first()
+                if (
+                    existing is not None
+                    and existing.status != ResidencyRegistration.Status.CANCELLED
+                ):
+                    raise ValidationError(
+                        "You are already registered for this residency block."
+                    )
+
+                occupied_seats = set(
+                    ResidencyRegistration.objects.select_for_update()
+                    .filter(
+                        block=locked_block,
+                        status__in=[
+                            ResidencyRegistration.Status.PENDING_PAYMENT,
+                            ResidencyRegistration.Status.CONFIRMED,
+                        ],
+                    )
+                    .values_list("seat_number", flat=True)
                 )
-                .values_list("seat_number", flat=True)
-            )
 
-            if len(occupied_seats) >= locked_block.capacity:
-                raise ValidationError("This residency block has reached full capacity.")
+                if len(occupied_seats) >= locked_block.capacity:
+                    raise ValidationError(
+                        "This residency block has reached full capacity."
+                    )
 
-            allocated_seat = next(
-                seat
-                for seat in range(1, locked_block.capacity + 1)
-                if seat not in occupied_seats
-            )
+                allocated_seat = next(
+                    seat
+                    for seat in range(1, locked_block.capacity + 1)
+                    if seat not in occupied_seats
+                )
 
-            company_ref = f"RES-{uuid.uuid4().hex[:12].upper()}"
-            placeholder_ref = f"PENDING-{company_ref}"
+                company_ref = f"RES-{uuid.uuid4().hex[:12].upper()}"
+                placeholder_ref = f"PENDING-{company_ref}"
 
-            payment = Payment.objects.create(
-                enrollment=enrollment,
-                provider=Payment.Provider.DPO,
-                provider_ref=placeholder_ref,
-                company_ref=company_ref,
-                amount_minor=locked_block.fee_minor,
-                currency=locked_block.currency,
-                status=Payment.Status.INITIATED,
-            )
+                payment = Payment.objects.create(
+                    enrollment=enrollment,
+                    provider=Payment.Provider.DPO,
+                    provider_ref=placeholder_ref,
+                    company_ref=company_ref,
+                    amount_minor=locked_block.fee_minor,
+                    currency=locked_block.currency,
+                    status=Payment.Status.INITIATED,
+                )
 
-            trans_token, checkout_url, create_log = request_dpo_trans_token(
-                payment=payment,
-                redirect_url=redirect_url,
-                back_url=back_url,
-            )
-            payment.provider_ref = trans_token
-            payment.checkout_url = checkout_url
-            payment.raw_log = {
-                "purpose": "residency_block_fee",
-                "block_id": str(locked_block.id),
-                "location": locked_block.location,
-                "initiation": create_log,
-                "verifications": [],
-            }
-            payment.save(
-                update_fields=["provider_ref", "checkout_url", "raw_log", "updated_at"]
-            )
+                trans_token, checkout_url, create_log = request_dpo_trans_token(
+                    payment=payment,
+                    redirect_url=redirect_url,
+                    back_url=back_url,
+                )
+                payment.provider_ref = trans_token
+                payment.checkout_url = checkout_url
+                payment.raw_log = {
+                    "purpose": "residency_block_fee",
+                    "block_id": str(locked_block.id),
+                    "location": locked_block.location,
+                    "initiation": create_log,
+                    "verifications": [],
+                }
+                payment.save(
+                    update_fields=[
+                        "provider_ref",
+                        "checkout_url",
+                        "raw_log",
+                        "updated_at",
+                    ]
+                )
 
-            registration = ResidencyRegistration.objects.create(
-                enrollment=enrollment,
-                block=locked_block,
-                seat_number=allocated_seat,
-                status=ResidencyRegistration.Status.PENDING_PAYMENT,
-                payment=payment,
-                dietary_notes=dietary_notes.strip(),
-            )
-            return registration
-    except IntegrityError as exc:
-        raise ValidationError(
-            "This residency block has reached full capacity or was concurrently booked."
-        ) from exc
+                registration = ResidencyRegistration.objects.create(
+                    enrollment=enrollment,
+                    block=locked_block,
+                    seat_number=allocated_seat,
+                    status=ResidencyRegistration.Status.PENDING_PAYMENT,
+                    payment=payment,
+                    dietary_notes=dietary_notes.strip(),
+                )
+                return registration
+        except OperationalError as exc:
+            if attempt < MAX_LOCK_RETRIES - 1:
+                time.sleep(0.015 * (attempt + 1) + random.uniform(0.002, 0.015))
+                continue
+            raise ValidationError(
+                "This residency block is currently busy processing another booking. Please try again."
+            ) from exc
+        except IntegrityError as exc:
+            raise ValidationError(
+                "This residency block has reached full capacity or was concurrently booked."
+            ) from exc
+
+    raise ValidationError("Unable to complete residency booking due to high concurrency.")
 
 
 @transaction.atomic

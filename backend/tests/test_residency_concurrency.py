@@ -16,7 +16,7 @@ import pytest
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import close_old_connections
+from django.db import close_old_connections, connection
 from django.test import RequestFactory
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -115,6 +115,7 @@ def residency_setup():
 
 
 @pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(connection.vendor == 'sqlite', reason="SQLite does not support concurrent writes")
 def test_two_simultaneous_bookings_for_last_seat_result_in_one_success(residency_setup):
     """
     Phase 5 Gate: Two simultaneous bookings for the last seat (capacity=1) result in

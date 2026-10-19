@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -139,7 +140,6 @@ class PaymentVerifyReturnView(APIView):
         serializer.is_valid(raise_exception=True)
         provider_ref = serializer.validated_data["provider_ref"]
 
-        # Ensure the student owns the payment being verified (404 if another student's token)
         get_object_or_404(
             Payment.objects.for_user(request.user),
             provider=Payment.Provider.DPO,
@@ -167,13 +167,13 @@ class PaymentVerifyReturnView(APIView):
 class DpoWebhookNotificationView(APIView):
     """
     POST /api/payments/webhook/dpo/
-    Server-to-server notification endpoint called by DPO Pay (supports XML or JSON/form payloads).
-    Never trusts the inbound payload status alone — extracts TransToken and executes a
-    server-to-server verifyToken check with idempotent UNIQUE(provider, provider_ref) handling.
+    Server-to-server notification endpoint called by DPO Pay (supports XML, JSON, or form payloads).
+    Accepts arbitrary content types (JSON, XML, text/plain, form-urlencoded) to prevent 415 errors.
     """
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def post(self, request: Request) -> Response:
         provider_ref = ""

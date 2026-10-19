@@ -1,12 +1,14 @@
 """
-DPO Pay Integration & Server-to-Server Verification Service for Dr. Violet's LMS (EdenLMS).
+DPO Pay Integration & Server-to-Server Verification Service for Eden Training Institute and Therapy.
 Complies with Blueprint Phase 3 & Phase 5 and Pre-Deployment Security Checklist #22:
 - Never trusts a price or status sent by the browser.
 - Uses defusedxml to parse DPO API v6 XML responses safely.
+- Strictly disables DPO-SANDBOX-* fallbacks in production (`config.settings.prod` or `ALLOW_DEV_SANDBOX=False`).
 - Verifies transactions server-to-server, validates exact integer minor-unit amount and currency,
   enforces idempotency, commits raw provider audit logs even on failure/tamper, activates course
   enrollments, and confirms linked 5-day ResidencyRegistrations ($100 USD).
 """
+import os
 import urllib.error
 import urllib.request
 import uuid
@@ -30,7 +32,7 @@ DPO_HOSTED_CHECKOUT_BASE = "https://secure.3gdirectpay.com/payv3.php?ID="
 
 
 class PaymentIntegrationError(Exception):
-    """Raised when DPO Pay communication or verification fails."""
+    """Raised when DPO Pay communication, configuration, or verification fails."""
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,35 @@ class DpoVerificationResult:
     transaction_currency: str
     customer_credit_type: str
     raw_xml: str
+
+
+def _is_placeholder_company_token(company_token: str) -> bool:
+    """Return True if the configured DPO_COMPANY_TOKEN is blank or a local placeholder."""
+    return (
+        not company_token
+        or company_token.startswith("your-dpo-")
+        or company_token == "sandbox-test-token"
+    )
+
+
+def _is_dev_sandbox_enabled() -> bool:
+    """
+    Return True only in local dev/test environments (`config.settings.dev`) unless
+    explicitly disabled via `settings.ALLOW_DEV_SANDBOX = False`.
+    Always returns False under `config.settings.prod`.
+    """
+    explicit_flag = getattr(settings, "ALLOW_DEV_SANDBOX", None)
+    if explicit_flag is False:
+        return False
+    if explicit_flag is True:
+        return True
+
+    settings_module = getattr(settings, "SETTINGS_MODULE", "") or os.environ.get(
+        "DJANGO_SETTINGS_MODULE", ""
+    )
+    if settings_module.endswith(".prod"):
+        return False
+    return bool(getattr(settings, "DEBUG", False) or settings_module.endswith(".dev"))
 
 
 def _decimal_string_to_minor_units(amount_str: str) -> int:
@@ -112,8 +143,10 @@ def request_dpo_trans_token(
 ) -> tuple[str, str, dict]:
     """
     Request a DPO Hosted Checkout Transaction Token (`TransToken`).
-    In local dev/test when DPO_COMPANY_TOKEN is a placeholder, generates a deterministic
-    sandbox token so offline tests and pilot rehearsals work without live credentials.
+    - In local dev/test (`_is_dev_sandbox_enabled() == True`) when DPO_COMPANY_TOKEN is a placeholder,
+      issues a local sandbox token for offline development and pytest runs.
+    - In production (`config.settings.prod` or `ALLOW_DEV_SANDBOX=False`), strictly requires live DPO
+      credentials and performs a live HTTPS XML request to DPO Pay.
     """
     company_token = getattr(settings, "DPO_COMPANY_TOKEN", "").strip()
     service_type = getattr(settings, "DPO_SERVICE_TYPE", "").strip() or "5525"
@@ -122,14 +155,14 @@ def request_dpo_trans_token(
         "DPO_API_URL",
         "https://secure.3gdirectpay.com/API/v6/",
     ).strip()
+    sandbox_allowed = _is_dev_sandbox_enabled()
+    is_placeholder = _is_placeholder_company_token(company_token)
 
-    is_sandbox_placeholder = (
-        not company_token
-        or company_token.startswith("your-dpo-")
-        or company_token == "sandbox-test-token"
-    )
-
-    if is_sandbox_placeholder:
+    if is_placeholder:
+        if not sandbox_allowed:
+            raise PaymentIntegrationError(
+                "Production DPO_COMPANY_TOKEN is not configured. Sandbox tokens are disabled in production."
+            )
         trans_token = f"DPO-SANDBOX-{payment.id.hex[:16].upper()}"
         checkout_url = f"{DPO_HOSTED_CHECKOUT_BASE}{trans_token}"
         log_entry = {
@@ -144,7 +177,7 @@ def request_dpo_trans_token(
     course_title = (
         payment.enrollment.cohort.course.title
         if payment.enrollment
-        else "Dr. Violet's LMS Tuition"
+        else "Eden Training Institute and Therapy Tuition"
     )
     customer_email = payment.enrollment.user.email if payment.enrollment else ""
 
@@ -196,8 +229,7 @@ def request_dpo_trans_token(
 def fetch_dpo_verification_from_provider(payment: Payment) -> DpoVerificationResult:
     """
     Perform a server-to-server call to DPO's `verifyToken` endpoint.
-    In local sandbox mode, returns a verified result matching the payment record unless
-    overridden by test cases.
+    Strictly rejects sandbox tokens or placeholder credentials in production.
     """
     company_token = getattr(settings, "DPO_COMPANY_TOKEN", "").strip()
     api_url = getattr(
@@ -205,14 +237,19 @@ def fetch_dpo_verification_from_provider(payment: Payment) -> DpoVerificationRes
         "DPO_API_URL",
         "https://secure.3gdirectpay.com/API/v6/",
     ).strip()
+    sandbox_allowed = _is_dev_sandbox_enabled()
+    is_placeholder = _is_placeholder_company_token(company_token)
 
-    is_sandbox_placeholder = (
-        not company_token
-        or company_token.startswith("your-dpo-")
-        or company_token == "sandbox-test-token"
-    )
+    if not sandbox_allowed and payment.provider_ref.startswith("DPO-SANDBOX-"):
+        raise PaymentIntegrationError(
+            "Sandbox payment tokens cannot be verified in production."
+        )
 
-    if is_sandbox_placeholder:
+    if is_placeholder:
+        if not sandbox_allowed:
+            raise PaymentIntegrationError(
+                "Production DPO_COMPANY_TOKEN is not configured. Cannot verify payment in production."
+            )
         return DpoVerificationResult(
             result_code="000",
             result_explanation="Transaction Paid (Sandbox Server-to-Server Verification)",
@@ -411,7 +448,6 @@ def verify_and_activate_dpo_payment(
                 update_fields=["status", "verified_at", "raw_log", "updated_at"]
             )
 
-            # Confirm linked 5-day ResidencyRegistration if this payment is for a residency block
             residency_reg = getattr(payment, "residency_registration", None)
             if residency_reg is not None:
                 residency_reg.status = "confirmed"

@@ -69,6 +69,13 @@
 - [x] **Task 6.1:** `backend/apps/*/admin.py` — Custom Django Admin filters, inline student progress percentages, CSV exports, and `django-otp` 2FA enforcement for staff accounts.
 - [x] **Task 7.1:** `docs/RUNBOOK.md` & `make predeploy` — Full 29-point security verification, backup restore test, and staging deployment.
 
+## Phase 8 — Real Institutional Cutover & Zero-Cost HTTPS Launch (`branch: p8-production-launch`)
+- [x] **Task 8.1:** `Makefile` — Pin all targets (`dev`, `check`, `predeploy`, `clean-demo`) to `.venv/bin/python` to prevent system Python `ModuleNotFoundError` and Vite `ECONNREFUSED` proxy errors.
+- [x] **Task 8.2:** `backend/apps/catalog/management/commands/seed_catalog.py` — Replace placeholder courses with real **Eden Training Institute and Therapy** TVETA details (`TVETA/PRIVATE/TVC/0019/2016`, KNEC Marriage & Family Therapy Diploma with 14-trainee cap, Shepherds Building Buruburu Phase II address).
+- [x] **Task 8.3:** `frontend/index.html` & `frontend/src/components/ui/LayoutShell.tsx` — Update header, footer, and metadata with real Eden Training Institute and Therapy address (`P.O. Box 70139 – 00400 Nairobi`), phone (`+254 722 466 014`), email (`edentherapycentre@gmail.com`), and TVETA license badge.
+- [x] **Task 8.4:** `backend/apps/accounts/turnstile.py` & `backend/apps/payments/services.py` — Strictly disable dev/sandbox tokens whenever `settings.DEBUG` is `False`.
+- [x] **Task 8.5:** `Dockerfile`, `render.yaml`, & `frontend/vercel.json` — Zero-cost HTTPS deployment manifests for Render/Koyeb + Neon PostgreSQL + Cloudflare Pages.
+
 ---
 
 ## 3. Antigravity IDE Agent Prompts (Greenfield Sequence)

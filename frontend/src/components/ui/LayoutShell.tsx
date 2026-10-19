@@ -38,27 +38,29 @@ export function Navbar({
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)]">
+      {/* Top Clinical & TVETA Registry Strip */}
       <div className="bg-[var(--color-bg-inverse)] px-4 py-1.5 text-[var(--color-text-inverse)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 font-clinical-mono text-[11px]">
           <span>
-            DR. VIOLET&apos;S INSTITUTE OF PSYCHOLOGY · LIVE LECTURES &amp; NAIROBI / EMBU RESIDENCY
+            EDEN TRAINING INSTITUTE &amp; THERAPY · LIC: TVETA/PRIVATE/TVC/0019/2016 · BURUBURU PHASE II, NAIROBI
           </span>
           <span className="text-amber-300">
-            LOCAL TIMEZONE: {detectedTimezone}
+            TEL: +254 722 466 014 · TIMEZONE: {detectedTimezone}
           </span>
         </div>
       </div>
 
+      {/* Main Navigation Row */}
       <nav
         aria-label="Primary Navigation"
         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3.5"
       >
         <Link to="/" className="group flex flex-col">
           <span className="font-editorial text-xl sm:text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">
-            Dr. Violet&apos;s Institute of Psychology
+            Eden Training Institute &amp; Therapy
           </span>
           <span className="font-clinical-mono text-[11px] uppercase tracking-widest text-[var(--color-text-muted)]">
-            Certificate &amp; Diploma Clinical LMS
+            Dr. Violet&apos;s Clinical LMS · KNEC &amp; TVETA Accredited
           </span>
         </Link>
 
@@ -73,7 +75,7 @@ export function Navbar({
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               }
             >
-              Catalog
+              Programmes
             </Link>
             <Link
               to="/my-learning"
@@ -170,39 +172,64 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 text-sm text-[var(--color-text-secondary)]">
           <div>
             <p className="font-editorial text-lg font-semibold text-[var(--color-text-primary)]">
-              Dr. Violet&apos;s Institute of Psychology
+              Eden Training Institute and Therapy
+            </p>
+            <p className="mt-1 font-clinical-mono text-[11px] font-semibold text-[var(--color-accent-terracotta)]">
+              TVETA Reg: TVETA/PRIVATE/TVC/0019/2016 (Licensed 28/01/2016)
             </p>
             <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              Accredited Certificate and Diploma programmes delivered via live Google Meet lectures
-              and signed class playback recordings.
+              Accredited Technical &amp; Vocational College offering KNEC-examined Diploma in
+              Counseling (Marriage &amp; Family Therapy Option) and Certificate programmes.
             </p>
           </div>
 
           <div>
             <p className="font-clinical-mono text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-              5-Day Practical Residency Block
+              Campus Location &amp; 5-Day Practical Residency
             </p>
             <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              Held in <strong>Nairobi</strong> and <strong>Embu</strong>. Residency fee of{" "}
-              <strong>$100 USD</strong> covers daily lunch and teas. Travel and lodging are the
-              student&apos;s responsibility.
+              <strong>Nairobi Campus:</strong> Shepherds Building, Buruburu Phase II, Mumias South
+              Road, Nairobi County (plus <strong>Embu</strong> practical residency block). The{" "}
+              <strong>$100 USD</strong> residency fee covers daily lunch and teas; travel and
+              lodging are the student&apos;s responsibility.
             </p>
           </div>
 
           <div>
             <p className="font-clinical-mono text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-              Tuition &amp; Security Architecture
+              Official Registry Contacts &amp; Admissions
             </p>
-            <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              Direct payments processed via DPO Pay hosted checkout. Protected by server-side
-              Django session authentication and CSRF protection.
-            </p>
+            <ul className="mt-1.5 space-y-1 font-clinical-mono text-xs text-[var(--color-text-muted)]">
+              <li>Postal: P.O. Box 70139 – 00400, Nairobi, Kenya</li>
+              <li>
+                Phone:{" "}
+                <a
+                  href="tel:+254722466014"
+                  className="text-[var(--color-text-primary)] underline"
+                >
+                  +254 722 466 014 (0722 466 014)
+                </a>
+              </li>
+              <li>
+                Email:{" "}
+                <a
+                  href="mailto:edentherapycentre@gmail.com"
+                  className="text-[var(--color-text-primary)] underline"
+                >
+                  edentherapycentre@gmail.com
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
         <div className="mt-6 border-t border-[var(--color-border-subtle)] pt-4 flex flex-wrap items-center justify-between gap-2 font-clinical-mono text-xs text-[var(--color-text-muted)]">
-          <span>© {new Date().getFullYear()} Dr. Violet&apos;s LMS (EdenLMS)</span>
-          <span>All live session timestamps stored in UTC · Displayed in student timezone</span>
+          <span>
+            © {new Date().getFullYear()} Eden Training Institute and Therapy · All Rights Reserved
+          </span>
+          <span>
+            DPO Pay Verified Tuition · Live Sessions Stored in UTC &amp; Displayed in Local Timezone
+          </span>
         </div>
       </div>
     </footer>

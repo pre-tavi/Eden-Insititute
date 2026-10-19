@@ -78,7 +78,7 @@ export function CatalogPage({ audience }: CatalogPageProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      {/* Editorial + Clinical Benchmark Header */}
+      {/* Editorial + TVETA & KNEC Benchmark Header */}
       <section
         aria-labelledby="catalog-hero-heading"
         className="border-b border-[var(--color-border-hairline)] pb-8"
@@ -86,18 +86,18 @@ export function CatalogPage({ audience }: CatalogPageProps) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-8">
             <p className="font-clinical-mono text-xs font-semibold uppercase tracking-widest text-[var(--color-accent-terracotta)]">
-              Academic Registry · 2026 / 2027 Cohorts
+              TVETA/PRIVATE/TVC/0019/2016 · Shepherds Building, Buruburu Phase II, Nairobi
             </p>
             <h1
               id="catalog-hero-heading"
               className="mt-2 font-editorial text-3xl sm:text-4xl lg:text-5xl font-semibold text-[var(--color-text-primary)]"
             >
-              Clinical &amp; Counselling Psychology Programmes with Live Faculty Supervision.
+              Accredited Counseling, Marriage &amp; Family Therapy Programmes.
             </h1>
             <p className="mt-3 max-w-2xl text-base text-[var(--color-text-secondary)]">
-              Every course pairs weekly live Google Meet lectures (rendered automatically in your
-              local timezone) with token-signed class playback recordings and optional or required
-              5-day practical residency blocks in Nairobi and Embu.
+              Licensed by TVETA and examined by KNEC. Every cohort combines weekly live Google Meet
+              supervision with signed lecture playbacks and 5-day practical residency blocks at
+              Shepherds Building (Buruburu Phase II, Mumias South Road, Nairobi) or Embu.
             </p>
           </div>
 
@@ -116,9 +116,9 @@ export function CatalogPage({ audience }: CatalogPageProps) {
                 </dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="font-semibold">Diploma Tier:</dt>
+                <dt className="font-semibold">KNEC Diploma Tier:</dt>
                 <dd className="font-clinical-mono">
-                  130–180K KES / $1,800 (vs $5K–$12K US/UK)
+                  150K KES / $1,800 (vs $5K–$12K US/UK)
                 </dd>
               </div>
             </dl>
@@ -143,7 +143,7 @@ export function CatalogPage({ audience }: CatalogPageProps) {
             [
               { id: "all", label: "All Programmes" },
               { id: "certificate", label: "Certificate Level" },
-              { id: "diploma", label: "Diploma Level" },
+              { id: "diploma", label: "KNEC Diploma Level" },
             ] as const
           ).map((tab) => {
             const isSelected = activeLevel === tab.id;
@@ -167,7 +167,7 @@ export function CatalogPage({ audience }: CatalogPageProps) {
         </div>
 
         <p className="font-clinical-mono text-xs text-[var(--color-text-muted)]">
-          5-Day Practical Block (Nairobi / Embu): $100 USD covers lunch &amp; teas
+          5-Day Practical Block (Buruburu Phase II Nairobi / Embu): $100 USD covers lunch &amp; teas
         </p>
       </section>
 
@@ -193,7 +193,7 @@ export function CatalogPage({ audience }: CatalogPageProps) {
       {!isLoading && !errorMessage && courses.length === 0 && (
         <EmptyState
           title="No published psychology programmes match this filter"
-          description="Try clearing the level filter or run the seed_catalog management command to populate Dr. Violet's initial cohorts."
+          description="Try clearing the level filter or run the seed_catalog management command to populate Eden Training Institute and Therapy's initial cohorts."
           actionLabel={activeLevel !== "all" ? "Show All Programmes" : undefined}
           onAction={
             activeLevel !== "all"
@@ -209,8 +209,8 @@ export function CatalogPage({ audience }: CatalogPageProps) {
           {courses.map((course, idx) => (
             <Card
               key={course.id}
-              specLabel={`LEVEL // ${course.level.toUpperCase()}`}
-              specCode={`PSY-${course.level === "diploma" ? "20" : "10"}${idx + 1}`}
+              specLabel={`TVETA/0019 // ${course.level.toUpperCase()}`}
+              specCode={`EDEN-${course.level === "diploma" ? "KNEC-20" : "CERT-10"}${idx + 1}`}
             >
               <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
                 <div>
@@ -252,8 +252,8 @@ export function CatalogPage({ audience }: CatalogPageProps) {
                         {course.residency === "none"
                           ? "100% Online (No physical block required)"
                           : course.residency === "optional"
-                          ? "Optional 5-Day Nairobi/Embu ($100 USD lunch & tea)"
-                          : "Required 5-Day Nairobi/Embu ($100 USD lunch & tea)"}
+                          ? "Optional 5-Day Buruburu II Nairobi / Embu ($100 USD)"
+                          : "Required 5-Day Buruburu II Nairobi / Embu ($100 USD)"}
                       </dd>
                     </div>
                   </dl>

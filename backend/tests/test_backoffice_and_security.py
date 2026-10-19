@@ -1,10 +1,6 @@
 """
-Phase 6 & Phase 7 Back-Office, Staff 2FA, CSV Export & Backup Restore Test Suite.
-Verifies:
-1. EnrollmentAdmin calculates per-student lesson progress percentage accurately.
-2. EnrollmentAdmin CSV export generates student progress and tuition status rows.
-3. Staff 2FA (`OTPAdminSite` + `TOTPDevice`) blocks unverified staff and permits verified staff.
-4. Database backup and restore verification preserves User, Course, and Enrollment integrity.
+Phase 6, Phase 7 & Phase 8 Back-Office, Staff 2FA, CSV Export, Backup Restore,
+and Production Sandbox Lockout Test Suite.
 """
 import sqlite3
 from datetime import date
@@ -13,11 +9,12 @@ from pathlib import Path
 import pytest
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django_otp.admin import OTPAdminSite
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.accounts.models import Profile
+from apps.accounts.turnstile import verify_turnstile_token
 from apps.catalog.models import Cohort, Course, Price
 from apps.classroom.models import Lesson, LessonProgress, Module
 from apps.enrollments.admin import (
@@ -26,6 +23,10 @@ from apps.enrollments.admin import (
     export_enrollments_progress_csv,
 )
 from apps.enrollments.models import Enrollment, activate_enrollment
+from apps.payments.services import (
+    PaymentIntegrationError,
+    initiate_enrollment_payment,
+)
 
 User = get_user_model()
 
@@ -50,7 +51,7 @@ def test_instructor_backoffice_progress_percentage_and_csv_export():
         course=course,
         name="January 2027 Intake",
         starts_on=date(2027, 1, 15),
-        capacity=30,
+        capacity=14,
         enrollment_open=True,
     )
     mod = Module.objects.create(course=course, order=1, title="Module 1")
@@ -84,7 +85,6 @@ def test_instructor_backoffice_progress_percentage_and_csv_export():
     enrollment = Enrollment.objects.create(user=student, cohort=cohort)
     activate_enrollment(enrollment, source="dpo_verified:TEST")
 
-    # Complete 1 of 2 published lessons -> 50%
     LessonProgress.objects.create(
         user=student,
         lesson=lesson_1,
@@ -129,14 +129,12 @@ def test_staff_totp_2fa_device_and_otp_admin_site():
     otp_site = OTPAdminSite()
     assert otp_site.name == "otpadmin"
 
-    # Without 2FA verification on the request, OTPAdminSite denies access even to a superuser
     factory = RequestFactory()
     request = factory.get("/admin/")
     dr_violet.is_verified = lambda: False
     request.user = dr_violet
     assert otp_site.has_permission(request) is False
 
-    # Once verified via TOTP 2FA, OTPAdminSite grants access
     dr_violet.is_verified = lambda: True
     assert otp_site.has_permission(request) is True
 
@@ -161,3 +159,52 @@ def test_sqlite_backup_and_restore_integrity(tmp_path: Path):
     row = conn_verify.execute("SELECT id, status FROM audit_canary").fetchone()
     conn_verify.close()
     assert row == ("eden-1", "verified")
+
+
+@pytest.mark.django_db
+@override_settings(
+    DEBUG=False,
+    ALLOW_DEV_SANDBOX=False,
+    DPO_COMPANY_TOKEN="sandbox-test-token",
+)
+def test_production_mode_rejects_dev_turnstile_and_dpo_sandbox():
+    """Phase 8 Task 8.4: Verify dev Turnstile tokens and DPO sandbox tokens are blocked in production."""
+    assert verify_turnstile_token("turnstile-dev-pass-token") is False
+
+    course = Course.objects.create(
+        title="Diploma in Counseling: Marriage and Family Therapy Option (KNEC)",
+        slug="diploma-mft-prod-guard-test",
+        level=Course.Level.DIPLOMA,
+        residency=Course.Residency.REQUIRED,
+        status=Course.Status.PUBLISHED,
+    )
+    Price.objects.create(
+        course=course,
+        audience=Price.Audience.LOCAL,
+        currency=Price.Currency.KES,
+        amount_minor=15_000_000,
+    )
+    cohort = Cohort.objects.create(
+        course=course,
+        name="January 2027 KNEC Intake",
+        starts_on=date(2027, 1, 18),
+        capacity=14,
+        enrollment_open=True,
+    )
+    student = User.objects.create_user(
+        email="prod.check@edenlms.org",
+        password="StrongPassword!2026",
+    )
+    Profile.objects.create(user=student, display_name="Prod Check", country="KE")
+    enrollment = Enrollment.objects.create(
+        user=student,
+        cohort=cohort,
+        status=Enrollment.Status.PENDING_PAYMENT,
+    )
+
+    with pytest.raises(PaymentIntegrationError, match="disabled in production"):
+        initiate_enrollment_payment(
+            enrollment=enrollment,
+            redirect_url="https://lms.edentherapy.co.ke/my-learning?dpo_return=1",
+            back_url="https://lms.edentherapy.co.ke/my-learning",
+        )

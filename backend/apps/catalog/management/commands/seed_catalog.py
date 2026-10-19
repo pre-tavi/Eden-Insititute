@@ -1,8 +1,13 @@
 """
-Idempotent management command to seed Dr. Violet's real psychology programmes,
-local (KES) and international (USD) integer minor-unit prices, intake cohorts,
-classroom modules, signed video lessons, live Google Meet sessions, and 5-day
-Nairobi & Embu practical residency blocks.
+Idempotent management command to seed Eden Training Institute and Therapy's official
+TVETA-licensed and KNEC-examined psychology & marriage/family therapy programmes.
+
+Official Registry Metadata:
+- Institution: Eden Training Institute and Therapy
+- TVETA License: TVETA/PRIVATE/TVC/0019/2016 (Registered 28/01/2016)
+- Campus: Shepherds Building, Buruburu Phase II, Mumias South Road, Nairobi County
+- Postal Address: P.O. Box 70139 - 00400, Nairobi
+- Tel: +254 722 466 014 | Email: edentherapycentre@gmail.com
 """
 from datetime import date, timedelta
 
@@ -14,75 +19,149 @@ from apps.catalog.models import Cohort, Course, Price
 from apps.classroom.models import Lesson, LiveSession, Module
 from apps.residency.models import ResidencyBlock
 
+LEGACY_DEMO_SLUGS = (
+    "diploma-clinical-applied-psychology",
+    "certificate-child-adolescent-development",
+)
+
 
 class Command(BaseCommand):
-    help = "Seed Dr. Violet's psychology Certificate and Diploma programmes, classroom lessons, and residency blocks."
+    help = (
+        "Seed Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
+        "KNEC Diploma and Certificate programmes, classroom modules, and residency blocks."
+    )
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
+        # Clean up legacy placeholder courses that have no student enrollments attached
+        for old_slug in LEGACY_DEMO_SLUGS:
+            old_course = Course.objects.filter(slug=old_slug).first()
+            if old_course is not None and not old_course.cohorts.filter(
+                enrollments__isnull=False
+            ).exists():
+                ResidencyBlock.objects.filter(course=old_course).delete()
+                old_course.delete()
+
         programmes = [
             {
-                "slug": "certificate-counselling-psychology",
-                "title": "Certificate in Counselling Psychology",
-                "level": Course.Level.CERTIFICATE,
-                "residency": Course.Residency.OPTIONAL,
-                "summary": (
-                    "Foundational therapeutic ethics, active listening, trauma-informed "
-                    "intake, and supervised case formulations delivered through weekly live lectures."
-                ),
-                "description": (
-                    "Module 1: Therapeutic Ethics, Confidentiality & Intake Interviewing (Weeks 1-3)\n"
-                    "Module 2: Person-Centred & Cognitive Behavioural Counselling Modalities (Weeks 4-6)\n"
-                    "Module 3: Trauma-Informed Care, Crisis Intervention & Case Formulation (Weeks 7-10)\n"
-                    "Module 4: Supervised Practicum & Optional 5-Day Nairobi/Embu Residency Block (Weeks 11-12)"
-                ),
-                "kes_minor": 3_500_000,
-                "usd_minor": 55_000,
-                "cohort_name": "January 2027 Intake",
-                "starts_on": date(2027, 1, 15),
-                "capacity": 30,
-            },
-            {
-                "slug": "diploma-clinical-applied-psychology",
-                "title": "Diploma in Clinical & Applied Psychology",
+                "slug": "diploma-counseling-marriage-family-therapy-knec",
+                "title": "Diploma in Counseling: Marriage and Family Therapy Option (KNEC)",
                 "level": Course.Level.DIPLOMA,
                 "residency": Course.Residency.REQUIRED,
                 "summary": (
-                    "Comprehensive psychometric assessment, psychopathology, group therapy "
-                    "leadership, and mandatory 5-day in-person clinical practicum in Nairobi or Embu."
+                    "TVETA-licensed (TVETA/PRIVATE/TVC/0019/2016) and KNEC-examined Diploma "
+                    "in Marriage and Family Therapy. Capped at a maximum of 14 trainees per cohort "
+                    "with weekly live supervision and a mandatory 5-day practical block at "
+                    "Shepherds Building (Buruburu Phase II, Nairobi) or Embu."
                 ),
                 "description": (
-                    "Module 1: Advanced Psychopathology & Diagnostic Classification Systems (Weeks 1-6)\n"
-                    "Module 2: Psychometric Testing, Clinical Formulation & Treatment Planning (Weeks 7-12)\n"
-                    "Module 3: Group Therapy Leadership, Family Systems & Community Mental Health (Weeks 13-18)\n"
-                    "Module 4: Mandatory 5-Day Practical Residency Block in Nairobi or Embu & Capstone (Weeks 19-24)"
+                    "Module 1: Systemic Family Therapy Theories, Genograms & Marital Assessment (KNEC Unit 1)\n"
+                    "Module 2: Couples Communication, Conflict Resolution & Attachment Repair (KNEC Unit 2)\n"
+                    "Module 3: Trauma, Domestic Crisis Intervention & Legal/Ethical Practice in Kenya (KNEC Unit 3)\n"
+                    "Module 4: Mandatory 5-Day Clinical Practicum (Shepherds Building, Buruburu Phase II Nairobi / Embu) & KNEC Research Project"
                 ),
-                "kes_minor": 18_000_000,
-                "usd_minor": 180_000,
-                "cohort_name": "February 2027 Intake",
-                "starts_on": date(2027, 2, 1),
-                "capacity": 25,
+                "kes_minor": 15_000_000,  # KES 150,000.00 (Local Tuition Tier)
+                "usd_minor": 180_000,     # USD 1,800.00 (International Tuition Tier)
+                "cohort_name": "January 2027 KNEC Intake (Max 14 Trainees)",
+                "starts_on": date(2027, 1, 18),
+                "capacity": 14,
+                "mod1_title": "Systemic Family Therapy & Relational Intake Formulation",
+                "mod1_desc": (
+                    "Clinical mastery of systemic family interviewing, multi-generational genograms, "
+                    "and ethical contracting under KNEC and TVETA standards."
+                ),
+                "lesson1_title": "Constructing Clinical Genograms & Systemic Hypotheses",
+                "lesson1_asset": "eden_tveta_0019_mft_mod1_les1",
+                "lesson1_notes": (
+                    "1. Map three-generation relational patterns and triangles during the initial marriage/family intake.\n"
+                    "2. Establish informed consent, confidentiality boundaries, and child safeguarding duties under Kenyan law.\n"
+                    "3. Prepare your anonymised couple formulation for Dr. Violet's live Thursday supervision seminar."
+                ),
+                "lesson2_title": "KNEC Marriage & Family Therapy Ethics & Intake Protocol",
+                "lesson2_notes": (
+                    "Official Eden Training Institute and Therapy clinical intake protocol "
+                    "(Shepherds Building, Buruburu Phase II, Mumias South Road, Nairobi). "
+                    "Covers relational history, dyadic adjustment screening, and crisis safety planning."
+                ),
+                "live_title": "Live KNEC Clinical Supervision & Family Case Seminar #1",
             },
             {
-                "slug": "certificate-child-adolescent-development",
-                "title": "Certificate in Child & Adolescent Psychological Practice",
+                "slug": "certificate-counselling-psychology",
+                "title": "Certificate in Counselling Psychology & Clinical Therapy Skills",
+                "level": Course.Level.CERTIFICATE,
+                "residency": Course.Residency.OPTIONAL,
+                "summary": (
+                    "Accredited foundational counseling skills, trauma-informed active listening, "
+                    "grief support, and ethical case management delivered via live Google Meet lectures "
+                    "with an optional 5-day practical block at Buruburu Phase II (Nairobi) or Embu."
+                ),
+                "description": (
+                    "Module 1: Counseling Ethics, Boundaries & The Therapeutic Alliance (Weeks 1-3)\n"
+                    "Module 2: Person-Centred, CBT & Solution-Focused Brief Therapy Skills (Weeks 4-6)\n"
+                    "Module 3: Grief, Loss, Addiction & Community Mental Health First Aid (Weeks 7-10)\n"
+                    "Module 4: Supervised Role-Play Practicum & Optional 5-Day Nairobi (Buruburu Phase II) / Embu Residency (Weeks 11-12)"
+                ),
+                "kes_minor": 3_500_000,   # KES 35,000.00
+                "usd_minor": 55_000,      # USD 550.00
+                "cohort_name": "February 2027 Intake (Max 14 Trainees)",
+                "starts_on": date(2027, 2, 1),
+                "capacity": 14,
+                "mod1_title": "Foundations of Therapeutic Ethics & Active Listening",
+                "mod1_desc": (
+                    "Core counseling micro-skills, unconditional positive regard, and structured clinical intake."
+                ),
+                "lesson1_title": "Therapeutic Boundaries, Empathy & Informed Consent",
+                "lesson1_asset": "eden_tveta_0019_cert_mod1_les1",
+                "lesson1_notes": (
+                    "1. Establish clear therapeutic boundaries and informed consent prior to client intake.\n"
+                    "2. Practice reflective listening, paraphrasing, and somatic grounding.\n"
+                    "3. Review case vignettes ahead of the live Google Meet supervision session."
+                ),
+                "lesson2_title": "Structured Client Intake & Mental Status Examination Guide",
+                "lesson2_notes": (
+                    "Step-by-step clinical intake template used at Eden Training Institute and Therapy "
+                    "for documenting presenting concerns, psychosocial history, and risk assessment."
+                ),
+                "live_title": "Live Counseling Micro-Skills & Supervision Seminar #1",
+            },
+            {
+                "slug": "certificate-marriage-family-therapy-foundations",
+                "title": "Certificate in Marriage, Family & Adolescent Therapy Foundations",
                 "level": Course.Level.CERTIFICATE,
                 "residency": Course.Residency.NONE,
                 "summary": (
-                    "Developmental milestones, school-based behavioural interventions, and "
-                    "family systems guidance tailored for 100% online local and international learners."
+                    "100% online certificate programme in pre-marital counseling, parenting systems, "
+                    "and adolescent behavioral guidance designed for working professionals across Kenya "
+                    "and international diaspora learners."
                 ),
                 "description": (
-                    "Module 1: Neurodevelopmental Stages across Infancy, Childhood & Adolescence (Weeks 1-3)\n"
-                    "Module 2: School-Based Assessment & Behavioural Intervention Protocols (Weeks 4-6)\n"
-                    "Module 3: Parent Consultation, Safeguarding & Cross-Cultural Ethics (Weeks 7-10)\n"
-                    "Module 4: Remote Clinical Case Supervision via Live Google Meet Seminars (Weeks 11-12)"
+                    "Module 1: Pre-Marital Counseling & Marital Expectations Assessment (Weeks 1-3)\n"
+                    "Module 2: Parenting Systems, Child Developmental Milestones & School Consultation (Weeks 4-6)\n"
+                    "Module 3: Adolescent Identity, Digital Wellbeing & Family Communication (Weeks 7-10)\n"
+                    "Module 4: Online Case Formulation & Live Google Meet Faculty Supervision (Weeks 11-12)"
                 ),
-                "kes_minor": 4_500_000,
-                "usd_minor": 75_000,
-                "cohort_name": "March 2027 Intake",
+                "kes_minor": 4_500_000,   # KES 45,000.00
+                "usd_minor": 75_000,      # USD 750.00
+                "cohort_name": "March 2027 Online Intake",
                 "starts_on": date(2027, 3, 1),
-                "capacity": 30,
+                "capacity": 20,
+                "mod1_title": "Pre-Marital Assessment & Family Systems Foundations",
+                "mod1_desc": (
+                    "Evidence-based frameworks for guiding couples, parents, and adolescents remotely."
+                ),
+                "lesson1_title": "Assessing Couple Dynamics & Family Communication Styles",
+                "lesson1_asset": "eden_tveta_0019_online_mod1_les1",
+                "lesson1_notes": (
+                    "1. Administer structured pre-marital and family communication inventories.\n"
+                    "2. Identify pursuer-distancer cycles and guide de-escalation exercises.\n"
+                    "3. Complete the adolescent safeguarding checklist before Unit 2."
+                ),
+                "lesson2_title": "Adolescent & Family Safeguarding Protocol",
+                "lesson2_notes": (
+                    "Comprehensive clinical reading covering cross-cultural family systems, "
+                    "adolescent assent, and tele-counseling ethics."
+                ),
+                "live_title": "Live Online Family & Adolescent Case Seminar #1",
             },
         ]
 
@@ -130,23 +209,19 @@ class Command(BaseCommand):
                 course=course,
                 order=1,
                 defaults={
-                    "title": "Foundations of Clinical Ethics & Intake Formulation",
-                    "description": "Core ethical principles, confidentiality, and clinical intake.",
+                    "title": item["mod1_title"],
+                    "description": item["mod1_desc"],
                 },
             )
             lesson1, _ = Lesson.objects.update_or_create(
                 module=mod1,
                 order=1,
                 defaults={
-                    "title": "Therapeutic Boundaries & Informed Consent",
+                    "title": item["lesson1_title"],
                     "kind": Lesson.Kind.VIDEO,
                     "duration_seconds": 1800,
-                    "video_asset_id": f"asset_{course.slug}_mod1_les1",
-                    "reading_body": (
-                        "1. Establish clear informed consent prior to clinical intake.\n"
-                        "2. Document confidentiality limits and safeguarding protocols.\n"
-                        "3. Prepare case formulation notes for Thursday's live seminar."
-                    ),
+                    "video_asset_id": item["lesson1_asset"],
+                    "reading_body": item["lesson1_notes"],
                     "is_published": True,
                 },
             )
@@ -154,25 +229,22 @@ class Command(BaseCommand):
                 module=mod1,
                 order=2,
                 defaults={
-                    "title": "Intake Interviewing & Case Formulation Protocol",
+                    "title": item["lesson2_title"],
                     "kind": Lesson.Kind.READING,
                     "duration_seconds": 900,
                     "video_asset_id": "",
-                    "reading_body": (
-                        "Structured clinical intake guide covering presenting problem, "
-                        "psychosocial history, and mental status examination."
-                    ),
+                    "reading_body": item["lesson2_notes"],
                     "is_published": True,
                 },
             )
 
             LiveSession.objects.update_or_create(
                 cohort=cohort,
-                title="Live Clinical Supervision & Case Seminar #1",
+                title=item["live_title"],
                 defaults={
                     "starts_at": now_utc + timedelta(minutes=10),
                     "duration_minutes": 90,
-                    "meet_url": "https://meet.google.com/eden-psy-live",
+                    "meet_url": "https://meet.google.com/eden-therapy-live",
                     "recording_lesson": lesson1,
                 },
             )
@@ -183,9 +255,12 @@ class Command(BaseCommand):
                     location=ResidencyBlock.Location.NAIROBI,
                     starts_on=date(2027, 4, 12),
                     defaults={
-                        "title": "Nairobi 5-Day Practical Clinical Block",
+                        "title": (
+                            "Nairobi 5-Day Practical Block "
+                            "(Shepherds Building, Buruburu Phase II, Mumias South Rd)"
+                        ),
                         "ends_on": date(2027, 4, 16),
-                        "capacity": 20,
+                        "capacity": 14,
                         "fee_minor": 10_000,
                         "currency": Price.Currency.USD,
                         "is_open": True,
@@ -196,9 +271,9 @@ class Command(BaseCommand):
                     location=ResidencyBlock.Location.EMBU,
                     starts_on=date(2027, 4, 19),
                     defaults={
-                        "title": "Embu 5-Day Practical Clinical Block",
+                        "title": "Embu 5-Day Practical Clinical Residency Block",
                         "ends_on": date(2027, 4, 23),
-                        "capacity": 20,
+                        "capacity": 14,
                         "fee_minor": 10_000,
                         "currency": Price.Currency.USD,
                         "is_open": True,
@@ -207,6 +282,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully seeded {len(programmes)} published programmes, classroom modules, and Nairobi/Embu residency blocks."
+                "Successfully seeded Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
+                f"catalog ({len(programmes)} programmes, KNEC 14-trainee cohorts, and Buruburu/Embu residency blocks)."
             )
         )

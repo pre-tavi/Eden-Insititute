@@ -47,3 +47,17 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+# Private environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated files
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
