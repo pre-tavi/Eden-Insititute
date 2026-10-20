@@ -1,8 +1,6 @@
 """
-Root URL configuration for Dr. Violet's LMS (EdenLMS).
-Complies with Blueprint Phase 6 and Pre-Deployment Security Checklist #21:
-- Supports configurable non-default admin URL (`settings.DJANGO_ADMIN_URL`).
-- Enforces TOTP 2FA (`OTPAdminSite`) for staff accounts when `settings.ENFORCE_STAFF_2FA` is enabled.
+Root URL configuration for Eden Training Institute and Therapy (EdenLMS) Backend API.
+Frontend SPA is served separately with zero cold start on Cloudflare Pages.
 """
 from django.conf import settings
 from django.contrib import admin
@@ -10,21 +8,24 @@ from django.http import JsonResponse
 from django.urls import include, path
 from django_otp.admin import OTPAdminSite
 
-admin.site.site_header = "Dr. Violet's Institute of Psychology — LMS Back-Office"
+admin.site.site_header = "Eden Training Institute and Therapy — LMS Back-Office"
 admin.site.site_title = "EdenLMS Instructor Admin"
-admin.site.index_title = "Academic Programmes, Cohorts, DPO Payments & Residency Blocks"
+admin.site.index_title = (
+    "TVETA/PRIVATE/TVC/0019/2016 · KNEC Programmes, Cohorts, DPO Payments & Residency Blocks"
+)
 
 if getattr(settings, "ENFORCE_STAFF_2FA", False):
     admin.site.__class__ = OTPAdminSite
 
 
 def api_root_index(request):
-    """Root index endpoint guiding developers and health checks to the active services."""
+    """Root JSON service directory for the Render Backend API."""
     return JsonResponse(
         {
-            "service": "Dr. Violet's LMS (EdenLMS) — Backend API",
+            "service": "Eden Training Institute and Therapy (EdenLMS) — Backend API",
+            "license": "TVETA/PRIVATE/TVC/0019/2016",
+            "campus": "Shepherds Building, Buruburu Phase II, Mumias South Road, Nairobi",
             "status": "online",
-            "student_portal_url": "http://localhost:5173/",
             "instructor_admin_url": f"/{settings.DJANGO_ADMIN_URL}",
             "endpoints": {
                 "health": "/api/health/",
@@ -38,8 +39,15 @@ def api_root_index(request):
 
 
 def api_root_health(request):
-    """Lightweight health check endpoint for smoke testing and uptime probes."""
-    return JsonResponse({"status": "ok", "service": "edenlms-api"})
+    """Lightweight health check endpoint for smoke testing and Render probes."""
+    return JsonResponse(
+        {
+            "status": "ok",
+            "service": "edenlms-api",
+            "institution": "Eden Training Institute and Therapy",
+            "license": "TVETA/PRIVATE/TVC/0019/2016",
+        }
+    )
 
 
 urlpatterns = [

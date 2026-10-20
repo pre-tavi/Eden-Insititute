@@ -1,6 +1,6 @@
 # ==============================================================================
-# Eden Training Institute and Therapy (EdenLMS) — Production Backend Dockerfile
-# Hardened Python 3.13-slim container running as non-root user `edenuser`
+# Eden Training Institute and Therapy (EdenLMS) — Production Backend API Dockerfile
+# Lean Python 3.13-slim container for Render.com (Frontend deployed on Cloudflare Pages)
 # ==============================================================================
 FROM python:3.13-slim
 
@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY backend /app/backend
 WORKDIR /app/backend
 
-# Collect static files for WhiteNoise using a build-time dummy key
+# Collect static files for Django Admin via WhiteNoise
 RUN DJANGO_SECRET_KEY="build-time-collectstatic-dummy-key-not-used-at-runtime-0123456789" \
     DJANGO_DEBUG=False \
     python manage.py collectstatic --noinput

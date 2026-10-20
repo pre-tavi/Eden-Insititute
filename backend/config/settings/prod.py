@@ -1,7 +1,9 @@
 """
 Production settings for Eden Training Institute and Therapy (EdenLMS).
-Enforces HTTPS/TLS, HSTS, Secure cookies, WhiteNoise static compression,
-PostgreSQL via DATABASE_URL, and disables all dev/sandbox payment and bot tokens.
+Configured for Decoupled Architecture:
+- React Frontend on Cloudflare Pages (`https://*.pages.dev`)
+- Django API + Instructor Admin on Render (`https://edenlms-api.onrender.com`)
+- Serverless PostgreSQL on Neon (`DATABASE_URL`)
 """
 from .base import *  # noqa: F403
 
@@ -16,7 +18,7 @@ DATABASES = {
 }
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa: F405
 
-# Trust TLS termination headers from Cloudflare / Render / Koyeb reverse proxy
+# Trust TLS termination headers from Cloudflare / Render reverse proxies
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
@@ -29,6 +31,23 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
+
+# Authorize both Render and Cloudflare Pages origins automatically
+CSRF_TRUSTED_ORIGINS = list(
+    set(
+        env.list(  # noqa: F405
+            "CSRF_TRUSTED_ORIGINS",
+            default=["https://*.onrender.com", "https://*.pages.dev"],
+        )
+        + ["https://*.onrender.com", "https://*.pages.dev"]
+    )
+)
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.pages\.dev$",
+    r"^https://.*\.onrender\.com$",
+]
 
 STORAGES = {
     "default": {

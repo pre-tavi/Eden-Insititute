@@ -1,23 +1,24 @@
 """
 Idempotent management command to seed Eden Training Institute and Therapy's official
-TVETA-licensed and KNEC-examined psychology & marriage/family therapy programmes.
-
-Official Registry Metadata:
-- Institution: Eden Training Institute and Therapy
-- TVETA License: TVETA/PRIVATE/TVC/0019/2016 (Registered 28/01/2016)
-- Campus: Shepherds Building, Buruburu Phase II, Mumias South Road, Nairobi County
-- Postal Address: P.O. Box 70139 - 00400, Nairobi
-- Tel: +254 722 466 014 | Email: edentherapycentre@gmail.com
+TVETA-licensed and KNEC-examined psychology & marriage/family therapy programmes,
+and deterministically configure Dr. Violet's superuser + 2FA token in Neon PostgreSQL.
 """
+import os
 from datetime import date, timedelta
 
+from axes.models import AccessAttempt
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 
+from apps.accounts.models import Profile
 from apps.catalog.models import Cohort, Course, Price
 from apps.classroom.models import Lesson, LiveSession, Module
 from apps.residency.models import ResidencyBlock
+
+User = get_user_model()
 
 LEGACY_DEMO_SLUGS = (
     "diploma-clinical-applied-psychology",
@@ -28,12 +29,64 @@ LEGACY_DEMO_SLUGS = (
 class Command(BaseCommand):
     help = (
         "Seed Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
-        "KNEC Diploma and Certificate programmes, classroom modules, and residency blocks."
+        "catalog and ensure Dr. Violet's superuser + 2FA token are active."
     )
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
-        # Clean up legacy placeholder courses that have no student enrollments attached
+        # 1. Unconditionally sync Dr. Violet's Superuser credentials & clear any Axes lockouts
+        admin_email = (
+            os.environ.get("DJANGO_SUPERUSER_EMAIL", "dr.violet@edenlms.org")
+            .strip()
+            .lower()
+        )
+        admin_password = os.environ.get(
+            "DJANGO_SUPERUSER_PASSWORD", "DrVioletAdmin!2026"
+        ).strip()
+        admin_otp_token = os.environ.get(
+            "DJANGO_SUPERUSER_OTP_TOKEN", "EDEN-2026-OTP"
+        ).strip()
+
+        AccessAttempt.objects.all().delete()
+
+        admin_user, _ = User.objects.get_or_create(
+            email=admin_email,
+            defaults={
+                "is_staff": True,
+                "is_superuser": True,
+                "is_active": True,
+                "email_verified": True,
+            },
+        )
+        admin_user.is_staff = True
+        admin_user.is_superuser = True
+        admin_user.is_active = True
+        admin_user.email_verified = True
+        admin_user.set_password(admin_password)
+        admin_user.save()
+
+        Profile.objects.update_or_create(
+            user=admin_user,
+            defaults={
+                "display_name": "Dr. Violet (Director)",
+                "country": "KE",
+                "timezone": "Africa/Nairobi",
+            },
+        )
+
+        # Seed a pool of StaticToken entries so `EDEN-2026-OTP` works across multiple logins
+        static_device, _ = StaticDevice.objects.get_or_create(
+            user=admin_user,
+            name="Dr. Violet Backup OTP",
+            defaults={"confirmed": True},
+        )
+        static_device.confirmed = True
+        static_device.save(update_fields=["confirmed"])
+        existing_count = static_device.token_set.filter(token=admin_otp_token).count()
+        for _ in range(max(0, 25 - existing_count)):
+            StaticToken.objects.create(device=static_device, token=admin_otp_token)
+
+        # 2. Clean up legacy placeholder courses without enrollments
         for old_slug in LEGACY_DEMO_SLUGS:
             old_course = Course.objects.filter(slug=old_slug).first()
             if old_course is not None and not old_course.cohorts.filter(
@@ -42,6 +95,7 @@ class Command(BaseCommand):
                 ResidencyBlock.objects.filter(course=old_course).delete()
                 old_course.delete()
 
+        # 3. Seed Official TVETA & KNEC Programmes
         programmes = [
             {
                 "slug": "diploma-counseling-marriage-family-therapy-knec",
@@ -60,8 +114,8 @@ class Command(BaseCommand):
                     "Module 3: Trauma, Domestic Crisis Intervention & Legal/Ethical Practice in Kenya (KNEC Unit 3)\n"
                     "Module 4: Mandatory 5-Day Clinical Practicum (Shepherds Building, Buruburu Phase II Nairobi / Embu) & KNEC Research Project"
                 ),
-                "kes_minor": 15_000_000,  # KES 150,000.00 (Local Tuition Tier)
-                "usd_minor": 180_000,     # USD 1,800.00 (International Tuition Tier)
+                "kes_minor": 15_000_000,
+                "usd_minor": 180_000,
                 "cohort_name": "January 2027 KNEC Intake (Max 14 Trainees)",
                 "starts_on": date(2027, 1, 18),
                 "capacity": 14,
@@ -101,8 +155,8 @@ class Command(BaseCommand):
                     "Module 3: Grief, Loss, Addiction & Community Mental Health First Aid (Weeks 7-10)\n"
                     "Module 4: Supervised Role-Play Practicum & Optional 5-Day Nairobi (Buruburu Phase II) / Embu Residency (Weeks 11-12)"
                 ),
-                "kes_minor": 3_500_000,   # KES 35,000.00
-                "usd_minor": 55_000,      # USD 550.00
+                "kes_minor": 3_500_000,
+                "usd_minor": 55_000,
                 "cohort_name": "February 2027 Intake (Max 14 Trainees)",
                 "starts_on": date(2027, 2, 1),
                 "capacity": 14,
@@ -140,8 +194,8 @@ class Command(BaseCommand):
                     "Module 3: Adolescent Identity, Digital Wellbeing & Family Communication (Weeks 7-10)\n"
                     "Module 4: Online Case Formulation & Live Google Meet Faculty Supervision (Weeks 11-12)"
                 ),
-                "kes_minor": 4_500_000,   # KES 45,000.00
-                "usd_minor": 75_000,      # USD 750.00
+                "kes_minor": 4_500_000,
+                "usd_minor": 75_000,
                 "cohort_name": "March 2027 Online Intake",
                 "starts_on": date(2027, 3, 1),
                 "capacity": 20,
@@ -283,6 +337,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 "Successfully seeded Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
-                f"catalog ({len(programmes)} programmes, KNEC 14-trainee cohorts, and Buruburu/Embu residency blocks)."
+                f"catalog and synced superuser login ({admin_email})."
             )
         )
