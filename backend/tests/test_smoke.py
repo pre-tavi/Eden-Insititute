@@ -1,3 +1,4 @@
+
 """
 Phase 0 Smoke Test Suite for Dr. Violet's LMS (EdenLMS).
 Verifies custom User Argon2 hashing, server-side audience rules, residency choices,
@@ -21,7 +22,12 @@ def test_health_endpoint_returns_200():
     client = APIClient()
     response = client.get(reverse("api-health"))
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "edenlms-api"}
+    assert response.json() == {
+        "status": "ok",
+        "service": "edenlms-api",
+        "institution": "Eden Training Institute and Therapy",
+        "license": "TVETA/PRIVATE/TVC/0019/2016",
+    }
 
 
 @pytest.mark.django_db
@@ -129,10 +135,15 @@ def test_catalog_list_and_detail_endpoints_with_dr_violet_pricing():
     assert payload["count"] == 2
 
     # Verify filtering by level (?level=certificate)
-    cert_filter_response = client.get(reverse("catalog:course-list"), {"level": "certificate"})
+    cert_filter_response = client.get(
+        reverse("catalog:course-list"), {"level": "certificate"}
+    )
     assert cert_filter_response.status_code == 200
     assert cert_filter_response.json()["count"] == 1
-    assert cert_filter_response.json()["results"][0]["slug"] == "certificate-counselling-psychology"
+    assert (
+        cert_filter_response.json()["results"][0]["slug"]
+        == "certificate-counselling-psychology"
+    )
     assert cert_filter_response.json()["results"][0]["residency"] == "optional"
 
     # Verify detail endpoint returns prices and open cohorts

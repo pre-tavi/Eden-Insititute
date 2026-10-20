@@ -1,0 +1,10 @@
+{
+  "name": "eden-training-institute",
+  "compatibility_date": "2026-04-01",
+  "main": "cloudflare-worker.mjs",
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

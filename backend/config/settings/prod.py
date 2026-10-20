@@ -1,7 +1,7 @@
 """
 Production settings for Eden Training Institute and Therapy (EdenLMS).
 Configured for Decoupled Architecture:
-- React Frontend on Cloudflare Pages (`https://*.pages.dev`)
+- React Frontend on Cloudflare (`https://*.workers.dev` / `https://*.pages.dev`)
 - Django API + Instructor Admin on Render (`https://edenlms-api.onrender.com`)
 - Serverless PostgreSQL on Neon (`DATABASE_URL`)
 """
@@ -9,6 +9,9 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 ALLOW_DEV_SANDBOX = False
+
+# Keep Instructor Admin login simple (Email + Password + django-axes lockout) for Dr. Violet
+ENFORCE_STAFF_2FA = False
 
 DATABASES = {
     "default": env.db(  # noqa: F405
@@ -32,20 +35,27 @@ SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
 
-# Authorize both Render and Cloudflare Pages origins automatically
+# Authorize Render, Cloudflare Pages, and Cloudflare Workers origins (RUF005 compliant)
 CSRF_TRUSTED_ORIGINS = list(
-    set(
-        env.list(  # noqa: F405
+    {
+        *env.list(  # noqa: F405
             "CSRF_TRUSTED_ORIGINS",
-            default=["https://*.onrender.com", "https://*.pages.dev"],
-        )
-        + ["https://*.onrender.com", "https://*.pages.dev"]
-    )
+            default=[
+                "https://*.onrender.com",
+                "https://*.pages.dev",
+                "https://*.workers.dev",
+            ],
+        ),
+        "https://*.onrender.com",
+        "https://*.pages.dev",
+        "https://*.workers.dev",
+    }
 )
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.pages\.dev$",
+    r"^https://.*\.workers\.dev$",
     r"^https://.*\.onrender\.com$",
 ]
 
