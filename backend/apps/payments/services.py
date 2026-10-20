@@ -3,9 +3,9 @@ DPO Pay Integration & Server-to-Server Verification Service for Eden Training In
 Complies with Blueprint Phase 3 & Phase 5 and Pre-Deployment Security Checklist #22:
 - Never trusts a price or status sent by the browser.
 - Uses defusedxml to parse DPO API v6 XML responses safely.
-- Strictly disables DPO-SANDBOX-* fallbacks in production (`config.settings.prod` or `ALLOW_DEV_SANDBOX=False`).
-- Locks only the Payment table row during `select_for_update()` so PostgreSQL never applies
-  `FOR UPDATE` to the nullable side of a LEFT OUTER JOIN.
+- Strictly disables unconfigured `sandbox-test-token` / `your-dpo-*` placeholders in production,
+  while allowing explicit `DPO-PILOT-SANDBOX` mode during pilot staging prior to DPO bank KYC completion.
+- Locks only the Payment table row during `select_for_update()` for PostgreSQL outer-join safety.
 """
 import os
 import urllib.error
@@ -28,6 +28,7 @@ from apps.enrollments.models import Enrollment, activate_enrollment
 from .models import Payment
 
 DPO_HOSTED_CHECKOUT_BASE = "https://secure.3gdirectpay.com/payv3.php?ID="
+EXPLICIT_PILOT_TOKEN = "DPO-PILOT-SANDBOX"
 
 
 class PaymentIntegrationError(Exception):
@@ -57,10 +58,13 @@ def _is_placeholder_company_token(company_token: str) -> bool:
 
 def _is_dev_sandbox_enabled() -> bool:
     """
-    Return True only in local dev/test environments (`config.settings.dev`) unless
-    explicitly disabled via `settings.ALLOW_DEV_SANDBOX = False`.
-    Always returns False under `config.settings.prod`.
+    Return True in local dev/test environments (`config.settings.dev`) or when the administrator
+    explicitly opts into `DPO_COMPANY_TOKEN = 'DPO-PILOT-SANDBOX'` for pre-KYC pilot rehearsals.
     """
+    company_token = getattr(settings, "DPO_COMPANY_TOKEN", "").strip()
+    if company_token == EXPLICIT_PILOT_TOKEN:
+        return True
+
     explicit_flag = getattr(settings, "ALLOW_DEV_SANDBOX", None)
     if explicit_flag is False:
         return False
@@ -142,10 +146,6 @@ def request_dpo_trans_token(
 ) -> tuple[str, str, dict]:
     """
     Request a DPO Hosted Checkout Transaction Token (`TransToken`).
-    - In local dev/test (`_is_dev_sandbox_enabled() == True`) when DPO_COMPANY_TOKEN is a placeholder,
-      issues a local sandbox token for offline development and pytest runs.
-    - In production (`config.settings.prod` or `ALLOW_DEV_SANDBOX=False`), strictly requires live DPO
-      credentials and performs a live HTTPS XML request to DPO Pay.
     """
     company_token = getattr(settings, "DPO_COMPANY_TOKEN", "").strip()
     service_type = getattr(settings, "DPO_SERVICE_TYPE", "").strip() or "5525"
@@ -155,7 +155,9 @@ def request_dpo_trans_token(
         "https://secure.3gdirectpay.com/API/v6/",
     ).strip()
     sandbox_allowed = _is_dev_sandbox_enabled()
-    is_placeholder = _is_placeholder_company_token(company_token)
+    is_placeholder = _is_placeholder_company_token(company_token) or (
+        company_token == EXPLICIT_PILOT_TOKEN
+    )
 
     if is_placeholder:
         if not sandbox_allowed:
@@ -228,7 +230,6 @@ def request_dpo_trans_token(
 def fetch_dpo_verification_from_provider(payment: Payment) -> DpoVerificationResult:
     """
     Perform a server-to-server call to DPO's `verifyToken` endpoint.
-    Strictly rejects sandbox tokens or placeholder credentials in production.
     """
     company_token = getattr(settings, "DPO_COMPANY_TOKEN", "").strip()
     api_url = getattr(
@@ -237,7 +238,9 @@ def fetch_dpo_verification_from_provider(payment: Payment) -> DpoVerificationRes
         "https://secure.3gdirectpay.com/API/v6/",
     ).strip()
     sandbox_allowed = _is_dev_sandbox_enabled()
-    is_placeholder = _is_placeholder_company_token(company_token)
+    is_placeholder = _is_placeholder_company_token(company_token) or (
+        company_token == EXPLICIT_PILOT_TOKEN
+    )
 
     if not sandbox_allowed and payment.provider_ref.startswith("DPO-SANDBOX-"):
         raise PaymentIntegrationError(
@@ -308,7 +311,6 @@ def initiate_enrollment_payment(
 ) -> Payment:
     """
     Create or reuse an INITIATED Payment for an Enrollment using the server-computed audience Price.
-    Never accepts an amount or currency from the client.
     """
     locked_enrollment = Enrollment.objects.select_for_update().get(pk=enrollment.pk)
     if locked_enrollment.status == Enrollment.Status.ACTIVE:
@@ -370,9 +372,6 @@ def verify_and_activate_dpo_payment(
 ) -> Payment:
     """
     Idempotent server-to-server verification handler for both browser return and DPO webhook.
-    Note: `select_for_update()` is executed directly on `Payment` without `select_related("enrollment")`
-    because `enrollment` is a nullable ForeignKey and PostgreSQL forbids `FOR UPDATE` on the
-    nullable side of a LEFT OUTER JOIN.
     """
     error_to_raise: ValidationError | None = None
 

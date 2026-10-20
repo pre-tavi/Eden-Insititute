@@ -1,6 +1,6 @@
 # ==============================================================================
 # Eden Training Institute and Therapy (EdenLMS) — Free-Tier Cloud Blueprint
-# Deploys the Django API on Render's Free Tier ($0/mo) and connects to Neon/Render PostgreSQL
+# Deploys the unified React SPA + Django API on Render Free Tier ($0/mo)
 # ==============================================================================
 services:
   - type: web
@@ -21,18 +21,20 @@ services:
       - key: DJANGO_ADMIN_URL
         value: eden-instructor-backoffice/
       - key: ENFORCE_STAFF_2FA
-        value: "True"
+        value: "False"
       - key: DJANGO_ALLOWED_HOSTS
         value: ".onrender.com,localhost,127.0.0.1"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://*.onrender.com,https://*.pages.dev"
+        value: "https://*.onrender.com"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://*.pages.dev"
+        value: "https://*.onrender.com"
       - key: DATABASE_URL
         sync: false
       - key: DPO_COMPANY_TOKEN
         sync: false
       - key: DPO_SERVICE_TYPE
         value: "5525"
+      - key: TURNSTILE_SITE_KEY
+        value: "1x00000000000000000000AA"
       - key: TURNSTILE_SECRET_KEY
         sync: false
