@@ -23,7 +23,9 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # no
 
 # Trust TLS termination headers from Cloudflare / Render reverse proxies
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
+# Cloudflare sets Host to the Render API host and also forwards the browser host.
+# Use Host for Django's ALLOWED_HOSTS validation; keep X-Forwarded-Proto for HTTPS.
+USE_X_FORWARDED_HOST = False
 
 # Pre-Deployment Security Checklist #13 & #16: Strict HTTPS & Cookie Flags
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)  # noqa: F405
