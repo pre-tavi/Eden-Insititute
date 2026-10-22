@@ -1,9 +1,9 @@
 /**
  * Cloudflare Edge Worker for Eden Training Institute and Therapy (`eden-training-institute`).
- * - Intercepts `/api/*`, `/eden-instructor-backoffice/*`, `/static/*`, and `/media/*`
+ * - Intercepts `/api/*`, `/eden-instructor-backoffice*`, `/static/*`, and `/media/*`
  *   (via `run_worker_first` in `wrangler.jsonc`) and proxies them to Render (`https://edenlms-api.onrender.com`).
- * - Uses `redirect: "manual"` and rewrites backend `Location` headers so Django Admin login
- *   redirects and `HttpOnly` session/CSRF cookies stay on the Cloudflare Worker origin.
+ * - Aligns Host, Origin, and Referer headers with Render so Django CSRF and ALLOWED_HOSTS checks
+ *   succeed immediately without cross-domain errors.
  * - Serves all other routes from `./frontend/dist` via `env.ASSETS` with SPA fallback.
  */
 const DEFAULT_BACKEND_ORIGIN = "https://edenlms-api.onrender.com";
@@ -32,22 +32,21 @@ export default {
 
       const proxyHeaders = new Headers(request.headers);
       proxyHeaders.set("Host", backendBaseUrl.host);
-      proxyHeaders.set("X-Forwarded-Host", incomingUrl.host);
+      proxyHeaders.delete("X-Forwarded-Host");
       proxyHeaders.set("X-Forwarded-Proto", "https");
 
-      // Rewrite Origin and Referer when hitting Django Admin / API so CSRF host checks match
       if (proxyHeaders.has("Origin")) {
-        proxyHeaders.set("Origin", incomingUrl.origin);
+        proxyHeaders.set("Origin", backendOrigin);
       }
       if (proxyHeaders.has("Referer")) {
         try {
           const refUrl = new URL(proxyHeaders.get("Referer"));
           proxyHeaders.set(
             "Referer",
-            `${incomingUrl.origin}${refUrl.pathname}${refUrl.search}`
+            `${backendOrigin}${refUrl.pathname}${refUrl.search}`
           );
         } catch {
-          // Keep existing Referer if malformed
+          proxyHeaders.set("Referer", `${backendOrigin}/`);
         }
       }
 
@@ -70,6 +69,14 @@ export default {
         responseHeaders.set(
           "Location",
           locationHeader.slice(backendOrigin.length) || "/"
+        );
+      }
+
+      // Prevent browser from caching a stale SPA shell on the admin route
+      if (incomingUrl.pathname.startsWith("/eden-instructor-backoffice")) {
+        responseHeaders.set(
+          "Cache-Control",
+          "no-store, no-cache, must-revalidate"
         );
       }
 

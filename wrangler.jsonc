@@ -9,7 +9,6 @@
     "run_worker_first": [
       "/api/*",
       "/eden-instructor-backoffice*",
-      "/eden-instructor-backoffice/*",
       "/static/*",
       "/media/*"
     ]
