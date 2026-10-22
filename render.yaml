@@ -1,6 +1,6 @@
 # ==============================================================================
 # Eden Training Institute and Therapy (EdenLMS) — Free-Tier Cloud Blueprint
-# Deploys the unified React SPA + Django API on Render Free Tier ($0/mo)
+# Deploys the Django API on Render Free Tier ($0/mo) and connects to Neon PostgreSQL
 # ==============================================================================
 services:
   - type: web
@@ -22,12 +22,16 @@ services:
         value: eden-instructor-backoffice/
       - key: ENFORCE_STAFF_2FA
         value: "False"
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: dr.violet@edenlms.org
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
       - key: DJANGO_ALLOWED_HOSTS
-        value: ".onrender.com,localhost,127.0.0.1"
+        value: ".onrender.com,.workers.dev,.pages.dev,localhost,127.0.0.1"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://*.onrender.com"
+        value: "https://*.onrender.com,https://*.workers.dev,https://*.pages.dev"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://*.onrender.com"
+        value: "https://*.onrender.com,https://*.workers.dev,https://*.pages.dev"
       - key: DATABASE_URL
         sync: false
       - key: DPO_COMPANY_TOKEN
@@ -38,3 +42,15 @@ services:
         value: "1x00000000000000000000AA"
       - key: TURNSTILE_SECRET_KEY
         sync: false
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        value: "edentherapycentre@gmail.com"
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: "Eden Training Institute and Therapy <edentherapycentre@gmail.com>"

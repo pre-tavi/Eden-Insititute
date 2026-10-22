@@ -1,16 +1,28 @@
 """
 Idempotent management command to seed Eden Training Institute and Therapy's official
 TVETA-licensed and KNEC-examined psychology & marriage/family therapy programmes.
+
+Security Audit Compliance:
+- Contains ZERO hardcoded fallback passwords or OTP tokens in source code.
+- Never clears django-axes brute-force lockout tables on startup.
+- Only provisions or rotates the superuser if DJANGO_SUPERUSER_EMAIL and
+  DJANGO_SUPERUSER_PASSWORD are explicitly supplied via environment variables.
 """
+import os
 from datetime import date, timedelta
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 
+from apps.accounts.models import Profile
 from apps.catalog.models import Cohort, Course, Price
 from apps.classroom.models import Lesson, LiveSession, Module
 from apps.residency.models import ResidencyBlock
+
+User = get_user_model()
 
 LEGACY_DEMO_SLUGS = (
     "diploma-clinical-applied-psychology",
@@ -20,13 +32,76 @@ LEGACY_DEMO_SLUGS = (
 
 class Command(BaseCommand):
     help = (
-        "Seed Eden Training Institute and Therapy's academic catalog. "
-        "Administrator accounts are provisioned separately."
+        "Seed Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
+        "catalog and optionally bootstrap superuser from secret environment variables."
     )
+
+    def _bootstrap_superuser_from_env(self) -> str:
+        """
+        Bootstrap Dr. Violet's superuser account strictly from secret environment variables.
+        Does not use hardcoded fallback credentials and does not overwrite an existing
+        admin password unless DJANGO_SUPERUSER_FORCE_RESET=True is explicitly set.
+        """
+        admin_email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "").strip().lower()
+        admin_password = os.environ.get("DJANGO_SUPERUSER_PASSWORD", "").strip()
+        admin_otp_token = os.environ.get("DJANGO_SUPERUSER_OTP_TOKEN", "").strip()
+        force_reset = (
+            os.environ.get("DJANGO_SUPERUSER_FORCE_RESET", "False").strip().lower()
+            in ("1", "true", "yes")
+        )
+
+        if not admin_email or not admin_password:
+            return "skipped (DJANGO_SUPERUSER_EMAIL / DJANGO_SUPERUSER_PASSWORD not set in env)"
+
+        admin_user, created = User.objects.get_or_create(
+            email=admin_email,
+            defaults={
+                "is_staff": True,
+                "is_superuser": True,
+                "is_active": True,
+                "email_verified": True,
+            },
+        )
+
+        updated_fields: list[str] = []
+        for attr in ("is_staff", "is_superuser", "is_active", "email_verified"):
+            if not getattr(admin_user, attr):
+                setattr(admin_user, attr, True)
+                updated_fields.append(attr)
+
+        if created or force_reset or not admin_user.has_usable_password():
+            admin_user.set_password(admin_password)
+            admin_user.save()
+        elif updated_fields:
+            admin_user.save(update_fields=updated_fields)
+
+        Profile.objects.update_or_create(
+            user=admin_user,
+            defaults={
+                "display_name": "Dr. Violet (Director)",
+                "country": "KE",
+                "timezone": "Africa/Nairobi",
+            },
+        )
+
+        if admin_otp_token:
+            static_device, _ = StaticDevice.objects.get_or_create(
+                user=admin_user,
+                name="Dr. Violet Backup OTP",
+                defaults={"confirmed": True},
+            )
+            if not static_device.confirmed:
+                static_device.confirmed = True
+                static_device.save(update_fields=["confirmed"])
+            if not static_device.token_set.filter(token=admin_otp_token).exists():
+                StaticToken.objects.create(device=static_device, token=admin_otp_token)
+
+        return f"verified ({admin_email}, created={created})"
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
-        # Clean up legacy placeholder courses without enrollments.
+        admin_status = self._bootstrap_superuser_from_env()
+
         for old_slug in LEGACY_DEMO_SLUGS:
             old_course = Course.objects.filter(slug=old_slug).first()
             if old_course is not None and not old_course.cohorts.filter(
@@ -35,7 +110,6 @@ class Command(BaseCommand):
                 ResidencyBlock.objects.filter(course=old_course).delete()
                 old_course.delete()
 
-        # Seed official TVETA & KNEC programmes.
         programmes = [
             {
                 "slug": "diploma-counseling-marriage-family-therapy-knec",
@@ -277,6 +351,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 "Successfully seeded Eden Training Institute and Therapy (TVETA/PRIVATE/TVC/0019/2016) "
-                "academic catalog."
+                f"catalog ({len(programmes)} programmes; superuser bootstrap: {admin_status})."
             )
         )

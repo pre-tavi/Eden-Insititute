@@ -2,6 +2,9 @@
 Session-authenticated API views for Student Registration, Login, Logout,
 Email Verification, Password Reset, CSRF cookie priming, and 'me' profile lookup.
 """
+import logging
+
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -27,6 +30,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -68,7 +72,7 @@ class RegisterView(APIView):
             ),
             from_email="noreply@edenlms.org",
             recipient_list=[user.email],
-            fail_silently=True,
+            fail_silently=bool(getattr(settings, 'DEBUG', False)),
         )
 
         # Log the user in using the standard ModelBackend after creation
@@ -191,7 +195,7 @@ class PasswordResetRequestView(APIView):
                 ),
                 from_email="noreply@edenlms.org",
                 recipient_list=[user.email],
-                fail_silently=True,
+                fail_silently=bool(getattr(settings, 'DEBUG', False)),
             )
 
         return Response(

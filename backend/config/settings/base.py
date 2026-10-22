@@ -1,6 +1,6 @@
 """
 Base settings for Eden Training Institute and Therapy (EdenLMS).
-Reads both `.env` and `.env.local` (written by `neon deploy`) from the repository root.
+Reads both `.env` and `.env.local` and configures WhiteNoise, SMTP/Console Email, and DRF.
 """
 from pathlib import Path
 
@@ -138,6 +138,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [FRONTEND_DIST_DIR] if FRONTEND_DIST_DIR.exists() else []
 WHITENOISE_ROOT = FRONTEND_DIST_DIR if FRONTEND_DIST_DIR.exists() else None
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -194,6 +195,27 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
 AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
 AXES_RESET_ON_SUCCESS = True
+
+# --- Transactional Email & Password Reset Configuration ---
+EMAIL_HOST = env("EMAIL_HOST", default="").strip()
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="").strip()
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default="Eden Training Institute and Therapy <noreply@edenlms.org>",
+)
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default=(
+        "django.core.mail.backends.smtp.EmailBackend"
+        if EMAIL_HOST
+        else "django.core.mail.backends.console.EmailBackend"
+    ),
+)
 
 DPO_COMPANY_TOKEN = env("DPO_COMPANY_TOKEN", default="")
 DPO_SERVICE_TYPE = env("DPO_SERVICE_TYPE", default="")

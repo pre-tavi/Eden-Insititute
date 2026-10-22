@@ -10,7 +10,8 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
-from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.exceptions import ParseError
+from rest_framework.parsers import BaseParser, FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -28,6 +29,29 @@ from .services import (
     initiate_enrollment_payment,
     verify_and_activate_dpo_payment,
 )
+
+
+class DpoXmlParser(BaseParser):
+    """Safely parses DPO application/xml webhook payloads using defusedxml."""
+
+    media_type = "application/xml"
+
+    def parse(self, stream, media_type=None, parser_context=None):
+        raw_bytes = stream.read()
+        if not raw_bytes:
+            return {}
+        try:
+            root = SafeET.fromstring(raw_bytes.decode("utf-8", errors="replace"))
+        except Exception as exc:
+            raise ParseError(f"Malformed XML payload: {exc}") from exc
+        return {child.tag: (child.text or "").strip() for child in root}
+
+
+class DpoTextXmlParser(DpoXmlParser):
+    """Safely parses DPO text/xml webhook payloads using defusedxml."""
+
+    media_type = "text/xml"
+
 
 CLIENT_FORBIDDEN_PRICE_FIELDS = frozenset(
     {"amount", "amount_minor", "amount_major", "price", "currency", "status", "audience"}
@@ -173,7 +197,7 @@ class DpoWebhookNotificationView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    parser_classes = [JSONParser, FormParser, MultiPartParser]
+    parser_classes = [JSONParser, FormParser, MultiPartParser, DpoXmlParser, DpoTextXmlParser]
 
     def post(self, request: Request) -> Response:
         provider_ref = ""
