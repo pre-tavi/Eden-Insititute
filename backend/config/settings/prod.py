@@ -1,7 +1,7 @@
 """
 Production settings for Eden Training Institute and Therapy (EdenLMS).
-Configured for Decoupled Architecture:
-- React Frontend on Cloudflare (`https://*.workers.dev` / `https://*.pages.dev`)
+Configured for Decoupled Edge Architecture:
+- React Frontend + Edge Proxy on Cloudflare (`https://*.workers.dev` / `https://*.pages.dev`)
 - Django API + Instructor Admin on Render (`https://edenlms-api.onrender.com`)
 - Serverless PostgreSQL on Neon (`DATABASE_URL`)
 """
@@ -10,8 +10,29 @@ from .base import *  # noqa: F403
 DEBUG = False
 ALLOW_DEV_SANDBOX = False
 
-# Keep Instructor Admin login simple (Email + Password + django-axes lockout) for Dr. Violet
+# Keep Instructor Admin login frictionless (Email + Password + django-axes lockout) for Dr. Violet
 ENFORCE_STAFF_2FA = False
+
+# Allow requests proxied from Cloudflare Workers (.workers.dev), Cloudflare Pages (.pages.dev), and Render
+ALLOWED_HOSTS = list(
+    {
+        *env.list(  # noqa: F405
+            "DJANGO_ALLOWED_HOSTS",
+            default=[
+                ".onrender.com",
+                ".workers.dev",
+                ".pages.dev",
+                "localhost",
+                "127.0.0.1",
+            ],
+        ),
+        ".onrender.com",
+        ".workers.dev",
+        ".pages.dev",
+        "localhost",
+        "127.0.0.1",
+    }
+)
 
 DATABASES = {
     "default": env.db(  # noqa: F405
@@ -23,9 +44,7 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # no
 
 # Trust TLS termination headers from Cloudflare / Render reverse proxies
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-# Cloudflare sets Host to the Render API host and also forwards the browser host.
-# Use Host for Django's ALLOWED_HOSTS validation; keep X-Forwarded-Proto for HTTPS.
-USE_X_FORWARDED_HOST = False
+USE_X_FORWARDED_HOST = True
 
 # Pre-Deployment Security Checklist #13 & #16: Strict HTTPS & Cookie Flags
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)  # noqa: F405
